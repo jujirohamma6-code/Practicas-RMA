@@ -1,0 +1,16 @@
+{
+  "name": "practicas-rma-monica",
+  "version": "0.1.0",
+  "description": "MVP Sistema Contable Electron",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.2.1",
+    "electron": "^32.0.0"
+  },
+  "dependencies": {
+    "sqlite3": "^6.0.1"
+  }
+}

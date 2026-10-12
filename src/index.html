@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Contable - Mónica MVP</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="monica-container">
+    <!-- CABECERA DE LA EMPRESA -->
+    <header class="monica-header">
+      <h2>INDUSTRIAS S.A.</h2>
+      <div class="info-sistema">
+        <span>12/10/2026</span>
+      </div>
+    </header>
+
+    <!-- PANELES Y NAVEGACIÓN -->
+    <main class="modulos-grid-wrapper">
+      <div class="titulo-ventana">MODULOS</div>
+      
+      <div class="grid-modulos">
+        <!-- Fila 1 -->
+        <button class="btn-modulo active-modulo" onclick="abrirModulo('facturacion')">
+          <span class="icon">📄</span> Facturación
+        </button>
+        <button class="btn-modulo" onclick="abrirModulo('cxc')">
+          <span class="icon">💼</span> Cuentas por Cobrar
+        </button>
+        <button class="btn-modulo" onclick="abrirModulo('contabilidad')">
+          <span class="icon">📚</span> Contabilidad
+        </button>
+
+        <!-- Fila 2 -->
+        <button class="btn-modulo active-modulo" onclick="abrirModulo('cxp')">
+          <span class="icon">📁</span> Cuentas por Pagar
+        </button>
+        <button class="btn-modulo" onclick="abrirModulo('inventario')">
+          <span class="icon">📦</span> Inventario
+        </button>
+        <button class="btn-modulo" onclick="abrirModulo('corrientes')">
+          <span class="icon">💳</span> Cuentas Corrientes
+        </button>
+
+        <!-- Fila 3 -->
+        <button class="btn-modulo active-modulo" onclick="abrirModulo('estimados')">
+          <span class="icon">📝</span> Estimados
+        </button>
+        <button class="btn-modulo" onclick="abrirModulo('parametros')">
+          <span class="icon">⚙️</span> Parámetros
+        </button>
+        <button class="btn-modulo" onclick="abrirModulo('terceros')">
+          <span class="icon">👥</span> Clientes / Proveedores
+        </button>
+
+        <!-- Fila 4 -->
+        <button class="btn-modulo" onclick="abrirModulo('manual')">
+          <span class="icon">📖</span> Manual
+        </button>
+        <div class="moneda-info">
+          <span>1 US $ = C$ 19.96</span>
+        </div>
+        <button class="btn-modulo salir" onclick="window.close()">
+          <span class="icon">🚪</span> Salir
+        </button>
+      </div>
+
+      <div class="footer-instruccion">
+        PRESIONE EL BOTON CORRESPONDIENTE
+      </div>
+
+      <!-- MENSAJE DE VERIFICACIÓN DE BASE DE DATOS SQLITE -->
+      <div class="status-bar">
+        <span>Estado SQLite: </span>
+        <strong id="test-db-msg">Cargando...</strong>
+      </div>
+    </main>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
