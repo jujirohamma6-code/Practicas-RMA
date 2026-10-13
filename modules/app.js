@@ -209,20 +209,38 @@ const MockDB = {
     lista.unshift({ id, ...datos });
     this.escribir();
     return { success: true, id };
+  },
+
+  actualizar(modulo, id, datos) {
+    const lista = this.leer()[modulo] || [];
+    const idx = lista.findIndex((r) => String(r.id) === String(id));
+    if (idx > -1) lista[idx] = { ...lista[idx], ...datos };
+    this.escribir();
+    return { success: idx > -1, cambios: idx > -1 ? 1 : 0 };
+  },
+
+  eliminar(modulo, id) {
+    const lista = this.leer()[modulo] || [];
+    const restantes = lista.filter((r) => String(r.id) !== String(id));
+    this.leer()[modulo] = restantes;
+    this.escribir();
+    return { success: true, cambios: lista.length - restantes.length };
   }
 };
 
 const DataService = {
-  usaBackend() {
-    return !!(window.api && typeof window.api.consultarDatos === 'function');
+  /** Devuelve la API IPC del módulo si Electron está disponible. */
+  api(modulo) {
+    const cfg = MODULOS[modulo];
+    return (window.api && window.api[cfg.backend]) || null;
   },
 
   /** Devuelve el listado completo de un módulo. */
   async listar(modulo) {
-    const cfg = MODULOS[modulo];
-    if (this.usaBackend()) {
+    const api = this.api(modulo);
+    if (api) {
       try {
-        const res = await window.api.consultarDatos(cfg.backend, {});
+        const res = await api.listar();
         if (res && res.success) return res.data || [];
         console.warn('[Datos] Error del backend:', res && res.error);
         return [];
@@ -236,16 +254,41 @@ const DataService = {
 
   /** Persiste un registro nuevo. */
   async crear(modulo, datos) {
-    const cfg = MODULOS[modulo];
-    if (this.usaBackend()) {
+    const api = this.api(modulo);
+    if (api) {
       try {
-        const res = await window.api.guardarRegistro(cfg.backend, 'crear', datos);
-        return res || { success: false, error: 'Sin respuesta del backend' };
+        return (await api.crear(datos)) || { success: false, error: 'Sin respuesta del backend' };
       } catch (e) {
         return { success: false, error: e.message };
       }
     }
     return MockDB.crear(modulo, datos);
+  },
+
+  /** Actualiza un registro existente por su id. */
+  async actualizar(modulo, id, datos) {
+    const api = this.api(modulo);
+    if (api) {
+      try {
+        return (await api.actualizar(id, datos)) || { success: false, error: 'Sin respuesta del backend' };
+      } catch (e) {
+        return { success: false, error: e.message };
+      }
+    }
+    return MockDB.actualizar(modulo, id, datos);
+  },
+
+  /** Elimina un registro existente por su id. */
+  async eliminar(modulo, id) {
+    const api = this.api(modulo);
+    if (api) {
+      try {
+        return (await api.eliminar(id)) || { success: false, error: 'Sin respuesta del backend' };
+      } catch (e) {
+        return { success: false, error: e.message };
+      }
+    }
+    return MockDB.eliminar(modulo, id);
   }
 };
 
@@ -341,8 +384,8 @@ function cerrarMenuMovil() {
 /* ==========================================================================
    06. RENDER DE ESTADÍSTICAS, TABLAS Y ACCIONES
    ========================================================================== */
-async function cargarModulo(modulo) {
-  if (estado.cargado[modulo]) {
+async function cargarModulo(modulo, forzar = false) {
+  if (estado.cargado[modulo] && !forzar) {
     renderModulo(modulo);
     return;
   }
@@ -496,23 +539,26 @@ async function guardarFormulario(modulo, form) {
   }
 
   if (id) {
-    // Edición: se actualiza en memoria (el backend actual solo expone crear/consultar)
-    const idx = estado[modulo].findIndex((r) => String(r.id) === String(id));
-    if (idx > -1) estado[modulo][idx] = { ...estado[modulo][idx], ...datos };
+    // Edición: UPDATE real en SQLite
+    const res = await DataService.actualizar(modulo, id, datos);
+    if (!res || !res.success) {
+      toast('No se pudo actualizar: ' + (res && res.error ? res.error : 'error desconocido'), 'danger');
+      return;
+    }
     toast('Registro actualizado correctamente.', 'success');
   } else {
+    // Alta: INSERT real en SQLite
     const res = await DataService.crear(modulo, datos);
-    if (res && res.success) {
-      estado[modulo].unshift({ id: res.id ?? Date.now(), ...datos });
-      toast('Registro guardado correctamente.', 'success');
-    } else {
+    if (!res || !res.success) {
       toast('No se pudo guardar: ' + (res && res.error ? res.error : 'error desconocido'), 'danger');
       return;
     }
+    toast('Registro guardado correctamente.', 'success');
   }
 
   cerrarFormulario(modulo);
-  renderModulo(modulo);
+  // Se relee desde la base de datos para que la tabla refleje el estado real.
+  await cargarModulo(modulo, true);
 }
 
 function editarRegistro(modulo, id) {
@@ -520,7 +566,7 @@ function editarRegistro(modulo, id) {
   if (registro) abrirFormulario(modulo, registro);
 }
 
-function eliminarRegistro(modulo, id) {
+async function eliminarRegistro(modulo, id) {
   const registro = estado[modulo].find((r) => String(r.id) === String(id));
   const etiqueta = registro
     ? (registro.nro_asiento || registro.nro_cheque || registro.codigo || registro.nombre_razon || '')
@@ -529,9 +575,16 @@ function eliminarRegistro(modulo, id) {
   const ok = window.confirm(`¿Eliminar ${MODULOS[modulo].singular} "${etiqueta}"?\nEsta acción no se puede deshacer.`);
   if (!ok) return;
 
-  estado[modulo] = estado[modulo].filter((r) => String(r.id) !== String(id));
-  renderModulo(modulo);
+  // DELETE real en SQLite
+  const res = await DataService.eliminar(modulo, id);
+  if (!res || !res.success) {
+    toast('No se pudo eliminar: ' + (res && res.error ? res.error : 'error desconocido'), 'danger');
+    return;
+  }
+
   toast('Registro eliminado.', 'success');
+  // Se relee desde la base de datos para confirmar el borrado.
+  await cargarModulo(modulo, true);
 }
 
 /* ==========================================================================

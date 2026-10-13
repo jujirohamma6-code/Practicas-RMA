@@ -1,13 +1,26 @@
+/* ==========================================================================
+   MÓNICA GESTIÓN · PROCESO PRINCIPAL (Electron)
+   --------------------------------------------------------------------------
+   Contenido:
+     1. Diagnóstico y blindaje de arranque.
+     2. Creación de la ventana principal.
+     3. Navegación entre vistas (IPC 'navegar-a').
+     4. BLOQUE 2 · CRUD real sobre SQLite (IPC 'crud:*').
+   Arquitectura segura: contextIsolation ON, nodeIntegration OFF y todo el
+   acceso a la base de datos ocurre únicamente aquí, en el proceso principal.
+   ========================================================================== */
+'use strict';
+
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const db = require('../database/db');
 
-// ==========================================
-// DIAGNÓSTICO Y BLINDAJE DE ARRANQUE
-// Registra cualquier error en un archivo en vez de permitir
-// que la aplicación se cierre en silencio.
-// ==========================================
+// Helpers de datos (promisificados) y modelos (whitelist tabla/campos).
+const { all, run, MODELOS } = require('../database/db');
+
+/* ==========================================================================
+   1. DIAGNÓSTICO Y BLINDAJE DE ARRANQUE
+   ========================================================================== */
 const LOG_FILE = path.join(__dirname, '..', 'electron-error.log');
 
 function registrarError(origen, error) {
@@ -20,14 +33,6 @@ function registrarError(origen, error) {
 // Evita cierres inmediatos en Windows causados por la aceleración gráfica.
 app.disableHardwareAcceleration();
 
-// Guarda los datos de Electron en la carpeta local 'userdata' del proyecto
-// para no depender de %AppData% (origen de errores "Acceso denegado").
-try {
-    app.setPath('userData', path.join(__dirname, '..', 'userdata'));
-} catch (e) {
-    registrarError('app.setPath(userData)', e);
-}
-
 // No permitir que el proceso muera por excepciones no controladas.
 process.on('uncaughtException', (error) => {
     registrarError('uncaughtException', error);
@@ -36,6 +41,9 @@ process.on('unhandledRejection', (reason) => {
     registrarError('unhandledRejection', reason);
 });
 
+/* ==========================================================================
+   2. VENTANA PRINCIPAL
+   ========================================================================== */
 let mainWindow;
 
 function createWindow() {
@@ -58,8 +66,7 @@ function createWindow() {
         if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show();
     });
 
-    // Si el renderer se cae, registramos el motivo y recargamos en vez de
-    // dejar la ventana muerta o cerrar la aplicación.
+    // Si el renderer se cae, registramos el motivo y recargamos.
     mainWindow.webContents.on('render-process-gone', (event, details) => {
         registrarError('render-process-gone', JSON.stringify(details));
         if (mainWindow && !mainWindow.isDestroyed()) mainWindow.reload();
@@ -103,201 +110,118 @@ app.on('window-all-closed', () => {
     }
 });
 
-// ==========================================
-// NAVEGACIÓN ENTRE PÁGINAS (usada por las vistas secundarias)
-// ==========================================
+/* ==========================================================================
+   3. NAVEGACIÓN ENTRE VISTAS
+   ========================================================================== */
 ipcMain.on('navegar-a', (event, pagina) => {
     if (!pagina || typeof pagina !== 'string') return;
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return;
-    // Solo se permite navegar a archivos HTML del propio proyecto (evita rutas externas)
+    // Solo se permite navegar a archivos HTML del propio src/ (evita rutas externas).
     const destino = path.join(__dirname, '..', 'src', path.basename(pagina));
     win.loadFile(destino).catch((err) => console.error('[Nav] No se pudo navegar a', pagina, err.message));
 });
 
-// ==========================================
-// MANEJADOR IPC CENTRALIZADO
-// ==========================================
-ipcMain.handle('consultar-datos', async (event, arg1, arg2, arg3) => {
+/* ==========================================================================
+   4. BLOQUE 2 · CRUD REAL SOBRE SQLITE
+   --------------------------------------------------------------------------
+   Cuatro canales genéricos cubren las cuatro operaciones para los tres módulos.
+   La seguridad se apoya en MODELOS (whitelist): el renderer solo puede mandar
+   un `modulo` conocido y campos permitidos; tabla y columnas nunca son input.
+   ========================================================================== */
+
+/** Devuelve el modelo del módulo o lanza un error si no es válido. */
+function resolverModelo(modulo) {
+    const clave = String(modulo || '').toLowerCase().trim();
+    const modelo = MODELOS[clave];
+    if (!modelo) throw new Error(`Módulo no válido: "${modulo}"`);
+    return modelo;
+}
+
+/** Filtra el payload dejando solo los campos permitidos del modelo. */
+function tomarCamposPermitidos(modelo, datos) {
+    const limpio = {};
+    if (!datos || typeof datos !== 'object') return limpio;
+    for (const campo of modelo.campos) {
+        if (datos[campo] !== undefined) limpio[campo] = datos[campo];
+    }
+    return limpio;
+}
+
+/* ---------- READ · Obtener / listar ---------- */
+ipcMain.handle('crud:listar', async (_event, { modulo } = {}) => {
     try {
-        let modulo, accion, payload;
-
-        if (arg1 && typeof arg1 === 'object') {
-            if ('modulo' in arg1) {
-                modulo = arg1.modulo;
-                accion = arg1.accion;
-                payload = arg1.payload;
-            } else {
-                payload = arg1;
-            }
-        }
-
-        if (arg2 && typeof arg2 === 'object') {
-            if ('modulo' in arg2 && !modulo) modulo = arg2.modulo;
-            if ('accion' in arg2) accion = arg2.accion;
-            if ('payload' in arg2) payload = arg2.payload;
-            if (!payload && !('accion' in arg2) && !('modulo' in arg2)) payload = arg2;
-        }
-
-        if (arg3 && typeof arg3 === 'object') {
-            if ('modulo' in arg3 && !modulo) modulo = arg3.modulo;
-            if ('accion' in arg3) accion = arg3.accion;
-            if ('payload' in arg3) payload = arg3.payload;
-            if (!payload) payload = arg3;
-        }
-
-        if (typeof accion === 'object' && accion !== null) {
-            if ('accion' in accion) accion = accion.accion;
-            if ('action' in accion) accion = accion.action;
-            if ('tipo' in accion) accion = accion.tipo;
-            if ('operacion' in accion) accion = accion.operacion;
-            if ('mode' in accion) accion = accion.mode;
-        }
-
-        if (typeof payload === 'object' && payload !== null) {
-            if (!accion && 'accion' in payload) accion = payload.accion;
-            if (!accion && 'action' in payload) accion = payload.action;
-            if (!accion && 'tipo' in payload) accion = payload.tipo;
-            if (!accion && 'operacion' in payload) accion = payload.operacion;
-            if (!accion && 'mode' in payload) accion = payload.mode;
-            if (!modulo && 'modulo' in payload) modulo = payload.modulo;
-        }
-
-        if (typeof arg1 === 'object' && arg1 !== null && !Array.isArray(arg1)) {
-            const keys = Object.keys(arg1);
-            if (keys.length > 0 && !accion) {
-                const key = keys[0];
-                const val = arg1[key];
-                if (typeof val === 'string' && ['consultar','obtener','listar','leer','crear','guardar','insertar','agregar'].includes(val.toLowerCase())) {
-                    accion = val;
-                }
-            }
-        }
-
-        let accionStr = typeof accion === 'string' ? accion.toLowerCase() : '';
-        if (!accionStr && typeof accion === 'object' && accion !== null) {
-            const posibles = ['accion','action','tipo','operacion','mode','operation'];
-            for (let k of posibles) {
-                if (k in accion && typeof accion[k] === 'string') {
-                    accionStr = accion[k].toLowerCase();
-                    break;
-                }
-            }
-        }
-
-        if (!accionStr && typeof payload === 'object' && payload !== null) {
-            const posibles = ['accion','action','tipo','operacion','mode'];
-            for (let k of posibles) {
-                if (k in payload && typeof payload[k] === 'string') {
-                    const v = payload[k].toLowerCase();
-                    if (['consultar','obtener','listar','leer','crear','guardar','insertar','agregar','registrar'].includes(v)) {
-                        accionStr = v;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!accionStr && typeof arg1 === 'object' && arg1 !== null && !Array.isArray(arg1)) {
-            for (let k of Object.keys(arg1)) {
-                const v = arg1[k];
-                if (typeof v === 'string') {
-                    const vl = v.toLowerCase();
-                    if (['consultar','obtener','listar','leer','crear','guardar','insertar','agregar','registrar'].includes(vl)) {
-                        accionStr = vl;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!accionStr) {
-            accionStr = 'consultar';
-        }
-
-        return new Promise((resolve, reject) => {
-            if (!modulo) {
-                return resolve({ success: false, error: 'No se especificó el módulo' });
-            }
-
-            const modStr = typeof modulo === 'string' ? modulo.toLowerCase().trim() : '';
-            const isContabilidad = modStr === 'contabilidad';
-            const isChequera = modStr === 'chequera' || modStr === 'cuentas' || modStr === 'movimientos_chequera';
-            const isClientes = modStr === 'clientes' || modStr === 'clientes_proveedores' || modStr === 'proveedores' || modStr === 'contactos';
-
-            const esConsulta = accionStr === 'consultar' || accionStr === 'obtener' || accionStr === 'listar' || accionStr === 'leer';
-            const esCrear = accionStr === 'crear' || accionStr === 'guardar' || accionStr === 'insertar' || accionStr === 'agregar' || accionStr === 'registrar';
-
-            if (isContabilidad) {
-                if (esConsulta || !esCrear) {
-                    db.all(`SELECT * FROM asientos_contables ORDER BY id DESC`, [], (err, rows) => {
-                        if (err) resolve({ success: false, error: err.message });
-                        else resolve({ success: true, data: rows });
-                    });
-                } else if (esCrear) {
-                    const { nro_asiento, fecha, libro, dcmto, cuenta, descripcion } = payload || {};
-                    const query = `INSERT INTO asientos_contables (nro_asiento, fecha, libro, dcmto, cuenta, descripcion) VALUES (?, ?, ?, ?, ?, ?)`;
-                    db.run(query, [
-                        nro_asiento || Date.now().toString(),
-                        fecha || new Date().toISOString().split('T')[0],
-                        libro || '',
-                        dcmto || '',
-                        cuenta || '',
-                        descripcion || ''
-                    ], function(err) {
-                        if (err) resolve({ success: false, error: err.message });
-                        else resolve({ success: true, id: this.lastID });
-                    });
-                }
-            } else if (isChequera) {
-                if (esConsulta || !esCrear) {
-                    db.all(`SELECT * FROM movimientos_chequera ORDER BY id DESC`, [], (err, rows) => {
-                        if (err) resolve({ success: false, error: err.message });
-                        else resolve({ success: true, data: rows });
-                    });
-                } else if (esCrear) {
-                    const { nro_cheque, fecha, beneficiario, monto, estado } = payload || {};
-                    const query = `INSERT INTO movimientos_chequera (nro_cheque, fecha, beneficiario, monto, estado) VALUES (?, ?, ?, ?, ?)`;
-                    db.run(query, [
-                        nro_cheque || `CHK-${Date.now()}`,
-                        fecha || new Date().toISOString().split('T')[0],
-                        beneficiario || '',
-                        monto || '0.00',
-                        estado || 'Pendiente'
-                    ], function(err) {
-                        if (err) resolve({ success: false, error: err.message });
-                        else resolve({ success: true, id: this.lastID });
-                    });
-                }
-            } else if (isClientes) {
-                if (esConsulta || !esCrear) {
-                    db.all(`SELECT * FROM clientes_proveedores ORDER BY id DESC`, [], (err, rows) => {
-                        if (err) resolve({ success: false, error: err.message });
-                        else resolve({ success: true, data: rows });
-                    });
-                } else if (esCrear) {
-                    const { codigo, nombre_razon, tipo, telefono, estado } = payload || {};
-                    const query = `INSERT INTO clientes_proveedores (codigo, nombre_razon, tipo, telefono, estado) VALUES (?, ?, ?, ?, ?)`;
-                    db.run(query, [
-                        codigo || `CLI-${Date.now()}`,
-                        nombre_razon || '',
-                        tipo || 'Cliente',
-                        telefono || '',
-                        estado || 'Activo'
-                    ], function(err) {
-                        if (err) resolve({ success: false, error: err.message });
-                        else resolve({ success: true, id: this.lastID });
-                    });
-                }
-            } else {
-                db.all(`SELECT * FROM asientos_contables ORDER BY id DESC`, [], (err, rows) => {
-                    if (err) resolve({ success: false, error: err.message });
-                    else resolve({ success: true, data: rows });
-                });
-            }
-        });
+        const { tabla } = resolverModelo(modulo);
+        const filas = await all(`SELECT * FROM ${tabla} ORDER BY id DESC`);
+        return { success: true, data: filas };
     } catch (error) {
-        console.error('[DB] Error:', error);
+        registrarError('crud:listar', error);
+        return { success: false, error: error.message };
+    }
+});
+
+/* ---------- CREATE · Crear ---------- */
+ipcMain.handle('crud:crear', async (_event, { modulo, datos } = {}) => {
+    try {
+        const modelo = resolverModelo(modulo);
+        const valores = tomarCamposPermitidos(modelo, datos);
+        const columnas = Object.keys(valores);
+
+        if (columnas.length === 0) {
+            return { success: false, error: 'No se recibieron datos para guardar.' };
+        }
+
+        const placeholders = columnas.map(() => '?').join(', ');
+        const sql = `INSERT INTO ${modelo.tabla} (${columnas.join(', ')}) VALUES (${placeholders})`;
+        const resultado = await run(sql, columnas.map((c) => valores[c]));
+
+        return { success: true, id: resultado.id };
+    } catch (error) {
+        registrarError('crud:crear', error);
+        return { success: false, error: error.message };
+    }
+});
+
+/* ---------- UPDATE · Actualizar ---------- */
+ipcMain.handle('crud:actualizar', async (_event, { modulo, id, datos } = {}) => {
+    try {
+        const modelo = resolverModelo(modulo);
+
+        if (id === undefined || id === null || id === '') {
+            return { success: false, error: 'Falta el identificador del registro.' };
+        }
+
+        const valores = tomarCamposPermitidos(modelo, datos);
+        const columnas = Object.keys(valores);
+
+        if (columnas.length === 0) {
+            return { success: false, error: 'No se recibieron datos para actualizar.' };
+        }
+
+        const asignaciones = columnas.map((c) => `${c} = ?`).join(', ');
+        const sql = `UPDATE ${modelo.tabla} SET ${asignaciones} WHERE id = ?`;
+        const resultado = await run(sql, [...columnas.map((c) => valores[c]), id]);
+
+        return { success: true, cambios: resultado.cambios };
+    } catch (error) {
+        registrarError('crud:actualizar', error);
+        return { success: false, error: error.message };
+    }
+});
+
+/* ---------- DELETE · Eliminar ---------- */
+ipcMain.handle('crud:eliminar', async (_event, { modulo, id } = {}) => {
+    try {
+        const modelo = resolverModelo(modulo);
+
+        if (id === undefined || id === null || id === '') {
+            return { success: false, error: 'Falta el identificador del registro.' };
+        }
+
+        const resultado = await run(`DELETE FROM ${modelo.tabla} WHERE id = ?`, [id]);
+        return { success: true, cambios: resultado.cambios };
+    } catch (error) {
+        registrarError('crud:eliminar', error);
         return { success: false, error: error.message };
     }
 });
