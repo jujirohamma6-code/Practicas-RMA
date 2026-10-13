@@ -1,0 +1,17 @@
+{
+  "name": "monica9",
+  "version": "1.0.0",
+  "description": "Sistema contable Mónica 9 - módulos web + Electron (Nicaragua, C$)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Joseling",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "electron": "^37.0.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.0"
+  }
+}

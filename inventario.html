@@ -136,6 +136,19 @@
   .sw{width:22px;height:22px;border-radius:5px;border:1px solid rgba(0,0,0,.25);cursor:pointer}
   .hidden{display:none!important}
 
+  /* ---------- Avisos flotantes (toasts) ---------- */
+  .toast{position:fixed;bottom:58px;left:50%;transform:translateX(-50%) translateY(20px);z-index:120;max-width:72vw;
+    padding:11px 18px;border-radius:8px;font-size:12.5px;font-weight:600;color:#fff;box-shadow:0 14px 34px rgba(8,25,60,.45);
+    opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.info{background:linear-gradient(180deg,#3f7fd8,#1e63d6);border:1px solid #164a9e}
+  .toast.ok{background:linear-gradient(180deg,#2aa76a,#1f8a56);border:1px solid #14663f}
+  .toast.error{background:linear-gradient(180deg,#d1503f,#b2382b);border:1px solid #8c2a20}
+
+  .formgrid{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
+  .formgrid .fld{min-width:130px}
+  .req{color:var(--danger);font-weight:700}
+
   @media (max-width:760px){ .grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))} .charts-grid{grid-template-columns:1fr} }
 
   @media print{
@@ -171,6 +184,7 @@
   </div>
 </div>
 <div class="overlay hidden" id="overlay"></div>
+<div class="toast" id="toast"></div>
 <script>
 const TASA = 19.960;
 const fmtNIO = new Intl.NumberFormat('es-NI',{style:'currency',currency:'NIO',minimumFractionDigits:2,maximumFractionDigits:2});
@@ -190,7 +204,7 @@ const fecha = s => new Date(s+'T00:00:00').toLocaleDateString('es-NI',{day:'2-di
 const MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
 /* ---------- Datos ---------- */
-const PRODUCTOS = [
+let PRODUCTOS = [
   ['P-0001','Arroz Faisán 5 lb','Abarrotes','Central',95.50,132.00,340,50],
   ['P-0002','Frijol Rojo La Cosecha 4 lb','Abarrotes','Central',78.00,108.00,210,40],
   ['P-0003','Azúcar San Antonio 5 lb','Abarrotes','Central',62.00,89.00,520,80],
@@ -206,6 +220,9 @@ const PRODUCTOS = [
   ['P-0013','Harina Maseca 2 kg','Abarrotes','Central',58.00,82.00,150,40],
   ['P-0014','Cemento Canal 50 kg','Construcción','Central',295.00,378.00,60,20]
 ].map((p,i)=>({codigo:p[0],nombre:p[1],categoria:p[2],bodega:p[3],costo:p[4],precio:p[5],existencia:p[6],minimo:p[7],valor:p[4]*p[6]}));
+
+/* Copia de los datos de ejemplo para sembrar la base de datos la primera vez. */
+const SEED = PRODUCTOS.map(p=>({codigo:p.codigo,nombre:p.nombre,categoria:p.categoria,bodega:p.bodega,costo:p.costo,precio:p.precio,existencia:p.existencia,minimo:p.minimo}));
 
 const ORDENES = [
   {numero:'OC-1001',proveedor:'Distribuidora La Colonia',fecha:iso(new Date(Y,0,9)),estado:'Recibida',items:[['P-0001',120],['P-0003',200],['P-0013',80]]},
@@ -297,6 +314,7 @@ const ICO = (function(){
 })();
 /* ---------- Estructura de pestañas / secciones / botones ---------- */
 const SECTIONS = [
+  {id:'productos', title:'Productos', icon:'box', buttons:[]},
   {id:'inventario', title:'Inventario', icon:'box', buttons:[
     {id:'listado',       label:'Listado de Productos',     icon:'book',  tip:'Todos los productos con costo, precio y existencia'},
     {id:'sincosto',      label:'Productos sin costo',       icon:'tag',   tip:'Productos que aún no tienen costo asignado'},
@@ -343,6 +361,8 @@ function renderShell(){
     pane.className = 'tabpane' + (i===0?' active':'');
     if(s.id === 'graficos'){
       pane.innerHTML = chartsUI();
+    } else if(s.id === 'productos'){
+      pane.innerHTML = productsUI();
     } else {
       pane.innerHTML = '<div class="sec"><div class="sec-head"><span class="k"></span>'+esc(s.title)+
         '</div><div class="grid">'+ s.buttons.map(tileHTML).join('') +'</div></div>';
@@ -356,6 +376,7 @@ function renderShell(){
       content.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('active', p.id==='tab-'+t.dataset.tab));
       status('Sección: '+t.textContent);
       if(t.dataset.tab==='graficos') drawAllCharts();
+      if(t.dataset.tab==='productos') renderProductos();
     });
   });
   content.querySelectorAll('.tile').forEach(function(t){
@@ -700,10 +721,190 @@ function bindCharts(){
   if($('ch-color')) $('ch-color').addEventListener('click', function(){ chartsPalette(this); });
 }
 
+/* ---------- CRUD de Productos (SQLite vía IPC) ---------- */
+const hasIPC = !!(window.api && typeof window.api.crearProducto==='function' && typeof window.api.listarProductos==='function'
+  && typeof window.api.actualizarProducto==='function' && typeof window.api.eliminarProducto==='function');
+let editandoCodigo = null;
+let toastTimer = null;
+
+function toast(msg, tipo){
+  const t = $('toast'); if(!t) return;
+  t.textContent = msg;
+  t.className = 'toast show ' + (tipo || 'info');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+
+function productsUI(){
+  return '<div class="sec">'+
+    '<div class="sec-head"><span class="k"></span>Gestión de Productos '+
+      '<span class="val" id="p-modo" style="margin-left:auto;font-weight:600"></span></div>'+
+    '<div style="padding:12px">'+
+      '<div class="formgrid">'+
+        '<div class="fgroup"><label class="flabel">Código <span class="req">*</span></label><input type="text" class="fld" id="p-codigo" placeholder="P-0000"></div>'+
+        '<div class="fgroup"><label class="flabel">Nombre <span class="req">*</span></label><input type="text" class="fld" id="p-nombre" placeholder="Nombre del producto"></div>'+
+        '<div class="fgroup"><label class="flabel">Categoría</label><input type="text" class="fld" id="p-categoria" placeholder="Categoría"></div>'+
+        '<div class="fgroup"><label class="flabel">Bodega</label><input type="text" class="fld" id="p-bodega" placeholder="Bodega"></div>'+
+        '<div class="fgroup"><label class="flabel">Costo <span class="req">*</span></label><input type="number" min="0" step="0.01" class="fld" id="p-costo" placeholder="0.00"></div>'+
+        '<div class="fgroup"><label class="flabel">Precio venta <span class="req">*</span></label><input type="number" min="0" step="0.01" class="fld" id="p-precio" placeholder="0.00"></div>'+
+        '<div class="fgroup"><label class="flabel">Existencia</label><input type="number" min="0" step="1" class="fld" id="p-existencia" placeholder="0"></div>'+
+        '<div class="fgroup"><label class="flabel">Mínimo</label><input type="number" min="0" step="1" class="fld" id="p-minimo" placeholder="0"></div>'+
+        '<div style="display:flex;gap:8px">'+
+          '<button class="btn btn-primary" id="p-guardar">Guardar</button>'+
+          '<button class="btn btn-ghost" id="p-limpiar">Limpiar</button>'+
+        '</div>'+
+      '</div>'+
+      '<p class="sub" style="margin:10px 0 8px">Los campos marcados con <span class="req">*</span> son obligatorios. Costo y precio deben ser mayores que cero; la existencia no puede ser negativa.</p>'+
+      '<div id="p-tabla"></div>'+
+    '</div></div>';
+}
+
+function mapProducto(r){
+  const costo = Number(r && r.costo || 0), existencia = Number(r && r.existencia || 0);
+  return {
+    codigo: String(r && r.codigo || ''), nombre: String(r && r.nombre || ''),
+    categoria: String((r && r.categoria) || ''), bodega: String((r && r.bodega) || ''),
+    costo: costo, precio: Number(r && r.precio || 0), existencia: existencia,
+    minimo: Number(r && r.minimo || 0), valor: costo * existencia
+  };
+}
+function setProductos(rows){ PRODUCTOS = (rows || []).map(mapProducto); }
+
+function actualizarModo(){
+  const e = $('p-modo'); if(!e) return;
+  e.textContent = hasIPC ? ('SQLite · contabilidad.db' + (editandoCodigo ? (' · editando '+editandoCodigo) : '')) : 'Modo local (sin SQLite)';
+}
+
+function renderProductos(){
+  const host = $('p-tabla'); if(!host) return;
+  const rows = PRODUCTOS.slice().sort(function(a,b){ return String(a.nombre).localeCompare(String(b.nombre)); });
+  let tv=0, tu=0;
+  rows.forEach(function(p){ tv += p.valor; tu += p.existencia; });
+  if(!rows.length){
+    host.innerHTML = '<p class="empty">No hay productos registrados. Use el formulario de arriba para agregar el primero.</p>';
+    return;
+  }
+  let h = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'+
+    '<th>Código</th><th>Producto</th><th>Categoría</th><th>Bodega</th>'+
+    '<th class="num">Costo</th><th class="num">Precio</th><th class="num">Existencia</th><th class="num">Mínimo</th><th class="num">Valor</th><th>Acciones</th>'+
+    '</tr></thead><tbody>';
+  rows.forEach(function(p){
+    h += '<tr>'+
+      '<td>'+esc(p.codigo)+'</td><td>'+esc(p.nombre)+'</td>'+
+      '<td>'+esc(p.categoria||'—')+'</td><td>'+esc(p.bodega||'—')+'</td>'+
+      '<td class="num">'+money(p.costo)+'</td><td class="num">'+money(p.precio)+'</td>'+
+      '<td class="num">'+num(p.existencia)+'</td><td class="num">'+num(p.minimo)+'</td><td class="num">'+money(p.valor)+'</td>'+
+      '<td><button class="btn" style="padding:4px 10px" data-edit="'+esc(p.codigo)+'">Editar</button> '+
+        '<button class="btn" style="padding:4px 10px" data-del="'+esc(p.codigo)+'">Eliminar</button></td>'+
+    '</tr>';
+  });
+  h += '</tbody><tfoot><tr><td>Totales ('+rows.length+')</td><td></td><td></td><td></td>'+
+    '<td></td><td></td><td class="num">'+num(tu)+'</td><td></td><td class="num">'+money(tv)+'</td><td></td></tr></tfoot></table></div>';
+  host.innerHTML = h;
+}
+
+function leerForm(){
+  return {
+    codigo: ($('p-codigo').value||'').trim(), nombre: ($('p-nombre').value||'').trim(),
+    categoria: ($('p-categoria').value||'').trim(), bodega: ($('p-bodega').value||'').trim(),
+    costo: $('p-costo').value, precio: $('p-precio').value,
+    existencia: $('p-existencia').value, minimo: $('p-minimo').value
+  };
+}
+function validarProducto(d){
+  if(!d.codigo){ toast('El código del producto es requerido.','error'); $('p-codigo').focus(); return null; }
+  if(!d.nombre){ toast('El nombre del producto es requerido.','error'); $('p-nombre').focus(); return null; }
+  if(d.costo==='' || !isFinite(Number(d.costo)) || Number(d.costo)<=0){ toast('El costo debe ser un número mayor que cero.','error'); $('p-costo').focus(); return null; }
+  if(d.precio==='' || !isFinite(Number(d.precio)) || Number(d.precio)<=0){ toast('El precio de venta debe ser un número mayor que cero.','error'); $('p-precio').focus(); return null; }
+  const ex = d.existencia==='' ? 0 : Number(d.existencia);
+  if(!isFinite(ex) || ex<0){ toast('La existencia no puede ser negativa.','error'); $('p-existencia').focus(); return null; }
+  const mi = d.minimo==='' ? 0 : Number(d.minimo);
+  if(!isFinite(mi) || mi<0){ toast('El mínimo no puede ser negativo.','error'); $('p-minimo').focus(); return null; }
+  return { codigo:d.codigo, nombre:d.nombre, categoria:d.categoria, bodega:d.bodega,
+    costo:Number(d.costo), precio:Number(d.precio), existencia:ex, minimo:mi };
+}
+function limpiarForm(){
+  ['p-codigo','p-nombre','p-categoria','p-bodega','p-costo','p-precio','p-existencia','p-minimo'].forEach(function(id){ if($(id)) $(id).value=''; });
+  editandoCodigo = null;
+  if($('p-codigo')) $('p-codigo').disabled = false;
+  actualizarModo();
+}
+
+function recargar(){
+  if(!hasIPC){ renderProductos(); actualizarModo(); return Promise.resolve(); }
+  return Promise.resolve(window.api.listarProductos()).then(function(rows){
+    if(Array.isArray(rows) && rows.length){ setProductos(rows); renderProductos(); actualizarModo(); return null; }
+    if(window.api.seedProductos && typeof window.api.seedProductos==='function'){
+      return Promise.resolve(window.api.seedProductos(SEED))
+        .then(function(){ return window.api.listarProductos(); })
+        .then(function(rows2){ setProductos(Array.isArray(rows2)?rows2:SEED); renderProductos(); actualizarModo(); });
+    }
+    setProductos(rows); renderProductos(); actualizarModo();
+  }).catch(function(){ toast('No se pudo cargar productos desde SQLite.','error'); renderProductos(); actualizarModo(); });
+}
+
+function guardarProducto(){
+  const d = validarProducto(leerForm()); if(!d) return;
+  const esEdicion = !!editandoCodigo;
+  if(hasIPC){
+    const p = esEdicion ? window.api.actualizarProducto(editandoCodigo, d) : window.api.crearProducto(d);
+    Promise.resolve(p).then(function(r){
+      if(r && r.ok){ toast((esEdicion?'Producto actualizado: ':'Producto creado: ')+((r.data&&r.data.nombre)||d.nombre),'ok'); limpiarForm(); recargar(); }
+      else toast((r && r.error) || 'No se pudo guardar el producto.','error');
+    }).catch(function(){ toast('No se pudo guardar (error de IPC).','error'); });
+  } else {
+    const i = PRODUCTOS.findIndex(function(x){ return x.codigo===d.codigo; });
+    if(esEdicion){
+      const j = PRODUCTOS.findIndex(function(x){ return x.codigo===editandoCodigo; });
+      if(j===-1){ toast('El producto "'+editandoCodigo+'" no existe.','error'); return; }
+      PRODUCTOS[j] = mapProducto(Object.assign({}, d, { codigo: editandoCodigo }));
+    } else {
+      if(i!==-1){ toast('Ya existe un producto con el código "'+d.codigo+'".','error'); return; }
+      PRODUCTOS.push(mapProducto(d));
+    }
+    toast((esEdicion?'Producto actualizado: ':'Producto creado: ')+d.nombre,'ok');
+    limpiarForm(); renderProductos();
+  }
+}
+
+function onTablaProductos(e){
+  const t = e.target.closest('[data-edit],[data-del]'); if(!t) return;
+  const cod = t.getAttribute('data-edit') || t.getAttribute('data-del');
+  const p = PRODUCTOS.find(function(x){ return x.codigo===cod; }); if(!p) return;
+  if(t.hasAttribute('data-edit')){
+    editandoCodigo = p.codigo;
+    $('p-codigo').value = p.codigo; $('p-codigo').disabled = true;
+    $('p-nombre').value = p.nombre; $('p-categoria').value = p.categoria||''; $('p-bodega').value = p.bodega||'';
+    $('p-costo').value = p.costo; $('p-precio').value = p.precio;
+    $('p-existencia').value = p.existencia; $('p-minimo').value = p.minimo;
+    actualizarModo(); toast('Editando '+p.nombre,'info'); $('p-nombre').focus();
+    return;
+  }
+  if(!confirm('¿Eliminar el producto "'+p.nombre+'" ('+p.codigo+')?')) return;
+  if(hasIPC){
+    Promise.resolve(window.api.eliminarProducto(p.codigo)).then(function(r){
+      if(r && r.ok){ toast('Producto eliminado: '+p.nombre,'ok'); if(editandoCodigo===p.codigo) limpiarForm(); recargar(); }
+      else toast((r && r.error) || 'No se pudo eliminar el producto.','error');
+    }).catch(function(){ toast('No se pudo eliminar (error de IPC).','error'); });
+  } else {
+    PRODUCTOS = PRODUCTOS.filter(function(x){ return x.codigo!==p.codigo; });
+    if(editandoCodigo===p.codigo) limpiarForm();
+    toast('Producto eliminado: '+p.nombre,'ok'); renderProductos();
+  }
+}
+
+function bindProductos(){
+  if($('p-guardar')) $('p-guardar').addEventListener('click', guardarProducto);
+  if($('p-limpiar')) $('p-limpiar').addEventListener('click', function(){ limpiarForm(); toast('Formulario limpio.','info'); });
+  if($('p-tabla')) $('p-tabla').addEventListener('click', onTablaProductos);
+}
+
 /* ---------- Inicio ---------- */
 function init(){
   renderShell();
   bindCharts();
+  bindProductos();
+  recargar();
   tick(); setInterval(tick,1000);
   $('overlay').addEventListener('mousedown', function(e){ if(e.target===$('overlay')) cerrarDialogo(); });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ if(paletteEl) closePalette(); else if(dlgState) cerrarDialogo(); } });
