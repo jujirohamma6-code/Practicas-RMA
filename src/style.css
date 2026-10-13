@@ -119,3 +119,12 @@ body {
   font-size: 12px;
   color: #1b5e20;
 }
+
+/* Permitir escritura y selección en todos los campos de texto */
+input, textarea, select {
+  -webkit-user-select: auto !important;
+  user-select: auto !important;
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  cursor: text !important;
+}

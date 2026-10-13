@@ -5,3 +5,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     testMsg.textContent = respuesta;
   }
 });
+
+
+function abrirModulo(modulo) {
+  if (modulo === 'estimados') {
+    window.location.href = 'estimados.html';
+  } else if (modulo === 'facturacion') {
+    window.location.href = 'facturacion.html';
+  } else if (modulo === 'cxp') {
+    window.location.href = 'cxp.html';
+  }
+}
