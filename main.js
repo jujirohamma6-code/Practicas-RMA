@@ -45,23 +45,33 @@ function estadoPara(abonado, monto) {
   return 'Pendiente';
 }
 
+function fechaOk(f) {
+  if (!f || typeof f !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(f)) return false;
+  const p = f.split('-');
+  const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  return d.getFullYear() === Number(p[0]) && d.getMonth() === Number(p[1]) - 1 && d.getDate() === Number(p[2]);
+}
+
 ipcMain.handle('cxc:crear', (e, datos) => {
   try {
     const numeroFactura = String((datos && datos.numeroFactura) || '').trim();
     const cliente = String((datos && datos.cliente) || '').trim();
     const monto = Number(datos && datos.monto);
-    const abono = Math.max(Number(datos && datos.abono) || 0, 0);
-    const vencimiento = String((datos && datos.fechaVencimiento) || '').trim() || null;
-    if (!cliente || !(monto > 0)) return false;
+    const abono = Number(datos && datos.abono);
+    const vencimiento = String((datos && datos.fechaVencimiento) || '').trim();
+    if (!cliente) return { ok: false, error: 'El cliente no puede estar vacío.' };
+    if (!Number.isFinite(monto) || monto <= 0) return { ok: false, error: 'El monto debe ser un número mayor que cero.' };
+    if (!vencimiento) return { ok: false, error: 'La fecha de vencimiento no puede estar vacía.' };
+    if (!fechaOk(vencimiento)) return { ok: false, error: 'La fecha de vencimiento no es válida.' };
+    const abonado = Math.min(Number.isFinite(abono) && abono > 0 ? abono : 0, monto);
     const id = crypto.randomUUID();
-    const abonado = Math.min(abono, monto);
     stmts.insert.run({
       id, factura: numeroFactura || ('F-' + new Date().getFullYear() + '-' + String(id.slice(0, 8))),
       cliente, monto, abonado, vencimiento, estado: estadoPara(abonado, monto)
     });
-    return toRow(stmts.get.get(id));
+    return { ok: true, data: toRow(stmts.get.get(id)) };
   } catch (error) {
-    return false;
+    return { ok: false, error: 'Error interno al guardar la cuenta.' };
   }
 });
 
@@ -86,14 +96,16 @@ ipcMain.handle('cxc:actualizar-estado', (e, { id, estado }) => {
 
 ipcMain.handle('cxc:abonar', (e, { id, monto }) => {
   try {
-    if (!id || !(Number(monto) > 0)) return false;
+    if (!id) return { ok: false, error: 'Identificador de cuenta no válido.' };
+    const cantidad = Number(monto);
+    if (!Number.isFinite(cantidad) || cantidad <= 0) return { ok: false, error: 'El monto de abono debe ser un número mayor que cero.' };
     const fila = stmts.get.get(id);
-    if (!fila) return false;
-    const nuevoAbonado = Math.min(Number(fila.abonado) + Number(monto), Number(fila.monto));
-    const res = stmts.updateAbonado.run({ id, abonado: nuevoAbonado, estado: estadoPara(nuevoAbonado, fila.monto) });
-    return res.changes > 0;
+    if (!fila) return { ok: false, error: 'La cuenta por cobrar no existe.' };
+    const nuevoAbonado = Math.min(Number(fila.abonado) + cantidad, Number(fila.monto));
+    stmts.updateAbonado.run({ id, abonado: nuevoAbonado, estado: estadoPara(nuevoAbonado, fila.monto) });
+    return { ok: true };
   } catch (error) {
-    return false;
+    return { ok: false, error: 'Error interno al registrar el abono.' };
   }
 });
 

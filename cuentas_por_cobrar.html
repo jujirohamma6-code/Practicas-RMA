@@ -229,6 +229,12 @@
   function fmtC(x){ return 'C$ ' + Number(x||0).toLocaleString('es-NI',{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function fmtF(f){ if(!f || f.indexOf('-')!==2) return f||'—'; var p=f.split('-'); return p.length===3 ? (p[2]+'/'+p[1]+'/'+p[0]) : f; }
   function diasVencido(f){ return Math.max(Math.floor((new Date()-new Date(f+'T00:00:00'))/86400000),0); }
+  function fechaValida(f){
+    if(!f || typeof f!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(f)) return false;
+    var p = f.split('-');
+    var d = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+    return d.getFullYear()===Number(p[0]) && d.getMonth()===Number(p[1])-1 && d.getDate()===Number(p[2]);
+  }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function uuid(){ return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); }
   function sumAbonos(c){ return (c.abonos||[]).reduce(function(s,a){ return s+Number(a.monto||0); },0); }
@@ -271,7 +277,7 @@
       id: r.id || r.ID || uuid(),
       factura: r.factura || r.numeroFactura || r.numero_factura || r.factura_numero || '',
       cliente: r.cliente || r.cliente_nombre || r.nombre || '(sin nombre)',
-      montoTotal: Number(r.montoTotal || r.monto || r.importe || r.monto_usd? Math.round((Number(r.monto_usd)*TASA)*100)/100 : 0),
+      montoTotal: Number(r.montoTotal || r.monto || r.importe) || (r.monto_usd ? Math.round(Number(r.monto_usd)*TASA*100)/100 : 0),
       abonos: ab.map(function(a){ return { monto: Number(a.monto||0), fecha: a.fecha||hoyISO() }; }),
       fechaVencimiento: r.fechaVencimiento || r.fecha_vencimiento || r.fecha || hoyISO()
     };
@@ -365,7 +371,10 @@
       numeroFactura: d.factura, cliente: d.cliente,
       monto: d.montoTotal, montoUsd: Math.round(d.montoTotal/TASA*100)/100,
       abono: d.abonoInicial, fechaVencimiento: d.fechaVencimiento, estado: 'Pendiente'
-    })).then(function(r){ return r ? normalizar(r) : null; }).catch(function(){ return null; });
+    })).then(function(r){
+      if(!r || r.ok === false){ return { ok:false, error:(r && r.error) || 'No se pudo guardar (error de IPC).' }; }
+      return { ok:true, datos: normalizar(r.data || r) };
+    }).catch(function(){ return { ok:false, error:'No se pudo guardar (error de IPC).' }; });
   }
   function ipcListar(){
     return Promise.resolve(window.api.listarCuentasPorCobrar()).then(function(rows){
@@ -377,9 +386,11 @@
   }
   function ipcAbono(id, monto){
     if(hasIPC && window.api.abonarCuenta && typeof window.api.abonarCuenta==='function'){
-      return Promise.resolve(window.api.abonarCuenta(id, monto)).then(function(){ return true; }).catch(function(){ return false; });
+      return Promise.resolve(window.api.abonarCuenta(id, monto)).then(function(r){
+        return { ok: !!(r && r.ok !== false), error: (r && r.error) || null };
+      }).catch(function(){ return { ok:false, error:'No se pudo registrar el abono.' }; });
     }
-    return Promise.resolve(false);
+    return Promise.resolve({ ok:false, error:'No se pudo registrar el abono.' });
   }
 
   function crearLocal(d){
@@ -415,6 +426,7 @@
     if(!(mon>0)){ toast('Ingrese un monto total válido en Córdobas.'); $('monto').focus(); return null; }
     if(ab<0 || ab>=mon){ toast('El abono inicial debe ser menor que el monto total.'); $('abonoInicial').focus(); return null; }
     if(!fec){ toast('Seleccione la fecha de vencimiento.'); $('fecha').focus(); return null; }
+    if(!fechaValida(fec)){ toast('La fecha de vencimiento no es válida.'); $('fecha').focus(); return null; }
     return { factura:fac, cliente:cli, montoTotal:Math.round(mon*100)/100, abonoInicial:Math.round(ab*100)/100, fechaVencimiento:fec };
   }
   function limpiar(){
@@ -424,10 +436,13 @@
   function registrar(e){
     if(e) e.preventDefault();
     var d = validar(); if(!d) return;
-    var p = hasIPC ? ipcCrear(d) : Promise.resolve(crearLocal(d));
+    var p = hasIPC ? ipcCrear(d) : Promise.resolve({ ok:true, datos: crearLocal(d) });
     p.then(function(n){
-      if(n){ toast('Registrado: '+n.cliente+' · '+fmtC(n.montoTotal)); limpiar(); render(); }
-      else toast('No se pudo guardar (error de IPC).');
+      if(n && n.ok !== false && n.datos){
+        if(hasIPC) registros.unshift(n.datos);
+        toast('Registrado: '+n.datos.cliente+' · '+fmtC(n.datos.montoTotal)); limpiar(); render();
+      }
+      else toast((n && n.error) || 'No se pudo guardar.');
     });
   }
 
@@ -453,15 +468,17 @@
     var saldo = saldoDe(c);
     if(!(monto>0)){ toast('Ingrese un monto de abono válido.'); $('abono').focus(); return; }
     if(monto > saldo+0.0001){ toast('El abono no puede superar el saldo ('+fmtC(saldo)+').'); $('abono').focus(); return; }
-    var fin = function(ok){
-      cerrarModal();
-      toast(ok ? 'Abono registrado de '+fmtC(monto) : 'No se pudo registrar el abono.');
-      render();
+    var fin = function(ok, err){
+      if(!ok){ cerrarModal(); toast(err || 'No se pudo registrar el abono.'); render(); return; }
+      cerrarModal(); toast('Abono registrado de '+fmtC(monto)); render();
     };
     if(hasIPC){
       var nuevoSaldo = Math.round((saldo-monto)*100)/100;
-      ipcAbono(abonandoId, monto).then(function(okI){
-        ipcEstado(abonandoId, nuevoSaldo<=0 ? 'Pagado' : 'Parcial').then(function(){ fin(okI); });
+      ipcAbono(abonandoId, monto).then(function(res){
+        ipcEstado(abonandoId, nuevoSaldo<=0 ? 'Pagado' : 'Parcial').then(function(){
+          if(res.ok) fin(true);
+          else fin(false, res.error || 'No se pudo registrar el abono.');
+        });
       });
     } else {
       fin(abonarLocal(abonandoId, monto));
