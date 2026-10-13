@@ -1,0 +1,130 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #8cb8e4; /* Tono celeste clásico de Mónica */
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.monica-container {
+  width: 850px;
+  background: #cce0ff;
+  border: 3px solid #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  padding: 15px;
+}
+
+.monica-header {
+  text-align: center;
+  border-bottom: 2px solid #a6c8e0;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.monica-header h2 {
+  color: #003366;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.info-sistema {
+  font-size: 13px;
+  color: #333;
+  margin-top: 3px;
+}
+
+.modulos-grid-wrapper {
+  background: #e6f0ff;
+  border: 2px inset #ffffff;
+  padding: 18px;
+  border-radius: 4px;
+}
+
+.titulo-ventana {
+  text-align: center;
+  font-weight: bold;
+  color: #002244;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+.grid-modulos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.btn-modulo {
+  background: #ffffff;
+  border: 2px outset #ffffff;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #4a0082; /* Tonalidad morada de los botones de Mónica */
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.1s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-modulo:hover {
+  background: #f0f7ff;
+  border-color: #64b5f6;
+}
+
+.btn-modulo:active {
+  border-style: inset;
+}
+
+/* Marca con verde tus 3 módulos asignados */
+.active-modulo {
+  border: 2px solid #2e7d32;
+}
+
+.moneda-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 2px inset #ccc;
+  font-weight: bold;
+  color: #c62828;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.footer-instruccion {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 12px;
+  color: #002244;
+  font-weight: bold;
+}
+
+.status-bar {
+  margin-top: 15px;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid #b0bec5;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 12px;
+  color: #1b5e20;
+}
+
+/* Permitir escritura y selección en todos los campos de texto */
+input, textarea, select {
+  -webkit-user-select: auto !important;
+  user-select: auto !important;
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  cursor: text !important;
+}
