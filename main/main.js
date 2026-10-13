@@ -1,14 +1,14 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const db = require('./db');
+const db = require('../database/db');
 
 // ==========================================
 // DIAGNÓSTICO Y BLINDAJE DE ARRANQUE
 // Registra cualquier error en un archivo en vez de permitir
 // que la aplicación se cierre en silencio.
 // ==========================================
-const LOG_FILE = path.join(__dirname, 'electron-error.log');
+const LOG_FILE = path.join(__dirname, '..', 'electron-error.log');
 
 function registrarError(origen, error) {
     const detalle = (error && (error.stack || error.message)) || error;
@@ -23,7 +23,7 @@ app.disableHardwareAcceleration();
 // Guarda los datos de Electron en la carpeta local 'userdata' del proyecto
 // para no depender de %AppData% (origen de errores "Acceso denegado").
 try {
-    app.setPath('userData', path.join(__dirname, 'userdata'));
+    app.setPath('userData', path.join(__dirname, '..', 'userdata'));
 } catch (e) {
     registrarError('app.setPath(userData)', e);
 }
@@ -51,7 +51,7 @@ function createWindow() {
     });
 
     // Cargar la interfaz principal unificada (sidebar + módulos)
-    mainWindow.loadFile(path.join(__dirname, 'index.html'));
+    mainWindow.loadFile(path.join(__dirname, '..', 'src', 'index.html'));
 
     // Mostrar la ventana recién cuando el contenido terminó de cargar.
     mainWindow.once('ready-to-show', () => {
@@ -111,7 +111,7 @@ ipcMain.on('navegar-a', (event, pagina) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win) return;
     // Solo se permite navegar a archivos HTML del propio proyecto (evita rutas externas)
-    const destino = path.join(__dirname, path.basename(pagina));
+    const destino = path.join(__dirname, '..', 'src', path.basename(pagina));
     win.loadFile(destino).catch((err) => console.error('[Nav] No se pudo navegar a', pagina, err.message));
 });
 
