@@ -4,42 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cuentas Corrientes - Mónica Gestión</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background-color: #2f6ea8; color: #333; padding: 20px; }
-    
-    .header-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      background: #1e4f7c; padding: 10px 20px; border-radius: 6px; color: white; margin-bottom: 20px;
-    }
-    .btn-regresar {
-      background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 4px;
-      font-weight: bold; cursor: pointer; color: #1e4f7c;
-    }
-    .btn-regresar:hover { background: #ffffff; }
-
-    .panel-container {
-      background: white; border-radius: 8px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-    
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; font-size: 14px; }
-    th { background: #f0f4f8; }
-
-    .actions-bar { margin-top: 20px; display: flex; gap: 10px; }
-    .btn-action {
-      padding: 10px 15px; border: 1px solid #aaa; background: #e6e6e6; border-radius: 4px;
-      cursor: pointer; font-weight: bold;
-    }
-    .btn-action:hover { background: #dcdcdc; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
   <!-- Barra Superior con Botón de Regreso -->
   <div class="header-bar">
     <h2>Cuentas Corrientes / Chequera</h2>
-    <button class="btn-regresar" id="btn-regresar">← Menú Principal</button>
+    <button class="btn-regresar" id="btn-menu">← Menú Principal</button>
   </div>
 
   <!-- Panel Principal del Módulo -->
@@ -67,12 +39,13 @@
     </table>
 
     <div class="actions-bar">
-      <button class="btn-action">Crear Cheque</button>
+      <button class="btn-action" id="btn-crear-cheque">Crear Cheque</button>
       <button class="btn-action">Modificar</button>
       <button class="btn-action">Anular Cheque</button>
     </div>
   </div>
 
+  <script src="utils.js"></script>
   <script src="monica-chequera.js"></script>
 </body>
 </html>

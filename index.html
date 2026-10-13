@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mónica Gestión · Sistema Contable</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+
+      <div class="brand">
+        <div class="brand__logo">MG</div>
+        <div class="brand__text">
+          <strong>Mónica Gestión</strong>
+          <span>Sistema Contable</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Módulos">
+        <p class="nav__label">Módulos</p>
+
+        <button class="nav-item is-active" type="button" data-vista="contabilidad">
+          <svg class="nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21z"/>
+            <path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/>
+            <path d="M8 7h8M8 10.5h5"/>
+          </svg>
+          <span class="nav-item__text">Contabilidad</span>
+        </button>
+
+        <button class="nav-item" type="button" data-vista="chequera">
+          <svg class="nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.5" y="6" width="19" height="13" rx="2.5"/>
+            <path d="M2.5 10.5h19"/>
+            <path d="M6 15h4"/>
+          </svg>
+          <span class="nav-item__text">Cuentas Corrientes</span>
+        </button>
+
+        <button class="nav-item" type="button" data-vista="clientes">
+          <svg class="nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9" cy="8" r="3.2"/>
+            <path d="M3.5 20a5.5 5.5 0 0 1 11 0"/>
+            <path d="M16.5 5.2a3.2 3.2 0 0 1 0 6.1"/>
+            <path d="M17.5 14.4A5.5 5.5 0 0 1 20.5 20"/>
+          </svg>
+          <span class="nav-item__text">Clientes y Proveedores</span>
+        </button>
+      </nav>
+
+      <div class="sidebar__footer">
+        <div class="user-card">
+          <div class="user-card__avatar">EM</div>
+          <div class="user-card__info">
+            <strong>Estudiante</strong>
+            <span>Sesión local</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
+
+    <!-- ===================== ÁREA PRINCIPAL ===================== -->
+    <div class="main">
+
+      <header class="topbar">
+        <button class="icon-btn topbar__menu" type="button" id="menu-btn" aria-controls="sidebar" aria-expanded="true" aria-label="Mostrar u ocultar menú lateral">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <div class="topbar__titles">
+          <h1 class="topbar__title" id="tituloVista">Contabilidad</h1>
+          <p class="topbar__subtitle" id="subtituloVista">Registro y control de asientos contables.</p>
+        </div>
+
+        <div class="topbar__actions">
+          <span class="date-chip" id="fechaHoy"></span>
+        </div>
+      </header>
+
+      <main class="content" id="content">
+
+        <!-- ============ MÓDULO: CONTABILIDAD ============ -->
+        <section class="vista is-active" id="vista-contabilidad" data-vista="contabilidad">
+          <div class="vista__header">
+            <div>
+              <h2 class="vista__title">Asientos Contables</h2>
+              <p class="vista__subtitle">Libro diario, cuentas y descripciones de cada asiento.</p>
+            </div>
+            <button class="btn btn--primary" type="button" data-action="nuevo" data-modulo="contabilidad">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo asiento
+            </button>
+          </div>
+
+          <div class="stats" id="stats-contabilidad"></div>
+
+          <!-- Formulario -->
+          <div class="form-panel" id="form-contabilidad">
+            <form class="form" data-modulo="contabilidad" novalidate>
+              <div class="form__header">
+                <h3 class="form__title" data-form-title>Nuevo asiento contable</h3>
+                <button class="icon-btn form__close" type="button" data-action="cancelar" data-modulo="contabilidad" aria-label="Cerrar formulario">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+              </div>
+
+              <input type="hidden" name="id">
+
+              <div class="form__grid">
+                <div class="field">
+                  <label for="con-nro">Nro. Asiento <span class="req">*</span></label>
+                  <input id="con-nro" name="nro_asiento" type="text" placeholder="AS-0001" required>
+                </div>
+                <div class="field">
+                  <label for="con-fecha">Fecha <span class="req">*</span></label>
+                  <input id="con-fecha" name="fecha" type="date" required>
+                </div>
+                <div class="field">
+                  <label for="con-libro">Libro</label>
+                  <select id="con-libro" name="libro">
+                    <option value="DIA">Diario (DIA)</option>
+                    <option value="MAY">Mayor (MAY)</option>
+                    <option value="CAJ">Caja (CAJ)</option>
+                    <option value="BAN">Banco (BAN)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="con-dcmto">Documento</label>
+                  <input id="con-dcmto" name="dcmto" type="text" placeholder="ASIE">
+                </div>
+                <div class="field">
+                  <label for="con-cuenta">Cuenta</label>
+                  <input id="con-cuenta" name="cuenta" type="text" placeholder="1101">
+                </div>
+                <div class="field field--full">
+                  <label for="con-desc">Descripción / Nombre</label>
+                  <textarea id="con-desc" name="descripcion" rows="2" placeholder="Detalle del asiento contable"></textarea>
+                </div>
+              </div>
+
+              <div class="form__actions">
+                <button class="btn btn--ghost" type="button" data-action="cancelar" data-modulo="contabilidad">Cancelar</button>
+                <button class="btn btn--primary" type="submit">Guardar asiento</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Tabla -->
+          <div class="table-card">
+            <div class="table-card__toolbar">
+              <div class="search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="search" placeholder="Buscar en asientos..." data-search="contabilidad" aria-label="Buscar asientos">
+              </div>
+              <span class="table-card__count" data-count="contabilidad"></span>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nro. Asiento</th>
+                    <th>Fecha</th>
+                    <th>Libro</th>
+                    <th>Dcmto.</th>
+                    <th>Cuenta</th>
+                    <th>Descripción / Nombre</th>
+                    <th class="col-actions">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody data-tbody="contabilidad"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ MÓDULO: CUENTAS CORRIENTES / CHEQUERA ============ -->
+        <section class="vista" id="vista-chequera" data-vista="chequera">
+          <div class="vista__header">
+            <div>
+              <h2 class="vista__title">Cuentas Corrientes / Chequera</h2>
+              <p class="vista__subtitle">Registro de movimientos, cheques y estado de cada documento.</p>
+            </div>
+            <button class="btn btn--primary" type="button" data-action="nuevo" data-modulo="chequera">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo movimiento
+            </button>
+          </div>
+
+          <div class="stats" id="stats-chequera"></div>
+
+          <div class="form-panel" id="form-chequera">
+            <form class="form" data-modulo="chequera" novalidate>
+              <div class="form__header">
+                <h3 class="form__title" data-form-title>Nuevo movimiento</h3>
+                <button class="icon-btn form__close" type="button" data-action="cancelar" data-modulo="chequera" aria-label="Cerrar formulario">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+              </div>
+
+              <input type="hidden" name="id">
+
+              <div class="form__grid">
+                <div class="field">
+                  <label for="che-nro">Nro. Cheque / Dcmto. <span class="req">*</span></label>
+                  <input id="che-nro" name="nro_cheque" type="text" placeholder="CHK-0001" required>
+                </div>
+                <div class="field">
+                  <label for="che-fecha">Fecha <span class="req">*</span></label>
+                  <input id="che-fecha" name="fecha" type="date" required>
+                </div>
+                <div class="field">
+                  <label for="che-ben">Beneficiario / Concepto</label>
+                  <input id="che-ben" name="beneficiario" type="text" placeholder="Pago de servicios">
+                </div>
+                <div class="field">
+                  <label for="che-monto">Monto <span class="req">*</span></label>
+                  <input id="che-monto" name="monto" type="number" min="0" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="field">
+                  <label for="che-estado">Estado</label>
+                  <select id="che-estado" name="estado">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Emitido">Emitido</option>
+                    <option value="Cobrado">Cobrado</option>
+                    <option value="Anulado">Anulado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form__actions">
+                <button class="btn btn--ghost" type="button" data-action="cancelar" data-modulo="chequera">Cancelar</button>
+                <button class="btn btn--primary" type="submit">Guardar movimiento</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="table-card">
+            <div class="table-card__toolbar">
+              <div class="search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="search" placeholder="Buscar en movimientos..." data-search="chequera" aria-label="Buscar movimientos">
+              </div>
+              <span class="table-card__count" data-count="chequera"></span>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nro. Cheque / Dcmto.</th>
+                    <th>Fecha</th>
+                    <th>Beneficiario / Concepto</th>
+                    <th class="col-num">Monto</th>
+                    <th>Estado</th>
+                    <th class="col-actions">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody data-tbody="chequera"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ MÓDULO: CLIENTES Y PROVEEDORES ============ -->
+        <section class="vista" id="vista-clientes" data-vista="clientes">
+          <div class="vista__header">
+            <div>
+              <h2 class="vista__title">Clientes y Proveedores</h2>
+              <p class="vista__subtitle">Directorio de contactos con tipo, teléfono y estado.</p>
+            </div>
+            <button class="btn btn--primary" type="button" data-action="nuevo" data-modulo="clientes">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo contacto
+            </button>
+          </div>
+
+          <div class="stats" id="stats-clientes"></div>
+
+          <div class="form-panel" id="form-clientes">
+            <form class="form" data-modulo="clientes" novalidate>
+              <div class="form__header">
+                <h3 class="form__title" data-form-title>Nuevo contacto</h3>
+                <button class="icon-btn form__close" type="button" data-action="cancelar" data-modulo="clientes" aria-label="Cerrar formulario">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+              </div>
+
+              <input type="hidden" name="id">
+
+              <div class="form__grid">
+                <div class="field">
+                  <label for="cli-cod">Código <span class="req">*</span></label>
+                  <input id="cli-cod" name="codigo" type="text" placeholder="CLI-0001" required>
+                </div>
+                <div class="field">
+                  <label for="cli-tipo">Tipo</label>
+                  <select id="cli-tipo" name="tipo">
+                    <option value="Cliente">Cliente</option>
+                    <option value="Proveedor">Proveedor</option>
+                  </select>
+                </div>
+                <div class="field field--full">
+                  <label for="cli-nombre">Nombre / Razón Social <span class="req">*</span></label>
+                  <input id="cli-nombre" name="nombre_razon" type="text" placeholder="Comercial San José S.A." required>
+                </div>
+                <div class="field">
+                  <label for="cli-tel">Teléfono</label>
+                  <input id="cli-tel" name="telefono" type="tel" placeholder="+505 8888-8888">
+                </div>
+                <div class="field">
+                  <label for="cli-estado">Estado</label>
+                  <select id="cli-estado" name="estado">
+                    <option value="Activo">Activo</option>
+                    <option value="Inactivo">Inactivo</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form__actions">
+                <button class="btn btn--ghost" type="button" data-action="cancelar" data-modulo="clientes">Cancelar</button>
+                <button class="btn btn--primary" type="submit">Guardar contacto</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="table-card">
+            <div class="table-card__toolbar">
+              <div class="search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="search" placeholder="Buscar en contactos..." data-search="clientes" aria-label="Buscar contactos">
+              </div>
+              <span class="table-card__count" data-count="clientes"></span>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Nombre / Razón Social</th>
+                    <th>Tipo</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th class="col-actions">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody data-tbody="clientes"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Notificaciones -->
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

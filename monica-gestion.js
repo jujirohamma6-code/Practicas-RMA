@@ -1,18 +1,9 @@
-const { ipcRenderer } = require('electron');
-
-document.addEventListener('DOMContentLoaded', () => {
-    const modulos = [
-        { id: 'btn-contabilidad', url: 'contabilidad.html' }, // <-- Debe ser contabilidad.html
-        { id: 'btn-chequera',     url: 'monica-chequera.html' },
-        { id: 'btn-clientes',     url: 'monica-clientes.html' }
-    ];
-
-    modulos.forEach(({ id, url }) => {
-        const boton = document.getElementById(id);
-        if (boton) {
-            boton.addEventListener('click', () => {
-                ipcRenderer.send('navegar-a', url);
-            });
-        }
-    });
+document.getElementById('btn-contabilidad').addEventListener('click', () => {
+    window.location.href = 'contabilidad.html';
+});
+document.getElementById('btn-chequera').addEventListener('click', () => {
+    window.location.href = 'monica-chequera.html';
+});
+document.getElementById('btn-clientes').addEventListener('click', () => {
+    window.location.href = 'monica-clientes.html';
 });

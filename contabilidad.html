@@ -4,78 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contabilidad - Mónica Gestión</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background-color: #2f6ea8; color: #333; padding: 20px; }
-
-    .header-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      background: #1e4f7c; padding: 10px 20px; border-radius: 6px; color: white; margin-bottom: 20px;
-    }
-    .btn-regresar {
-      background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 4px;
-      font-weight: bold; cursor: pointer; color: #1e4f7c;
-    }
-    .btn-regresar:hover { background: #ffffff; }
-
-    .nav-tabs {
-      display: flex; gap: 5px; background: #e0e0e0; padding: 5px 5px 0 5px; border-radius: 6px 6px 0 0;
-    }
-    .tab {
-      padding: 8px 15px; background: #c0c0c0; border: 1px solid #999; border-bottom: none;
-      cursor: pointer; font-size: 13px; font-weight: bold; border-radius: 4px 4px 0 0;
-    }
-    .tab.active { background: #ffffff; border-bottom: 1px solid #ffffff; color: #b91c1c; }
-
-    .panel-container {
-      background: white; border-radius: 0 0 8px 8px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-
-    .filter-group { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; font-size: 14px; }
-    .filter-group select { padding: 4px 8px; font-size: 14px; }
-
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 13px; }
-    th { background: #f0f4f8; }
-
-    .table-footer {
-      text-align: right; font-weight: bold; font-style: italic; color: #701a75; padding: 8px;
-    }
-
-    .actions-bar { margin-top: 20px; display: flex; gap: 10px; }
-    .btn-action {
-      padding: 8px 14px; border: 1px solid #aaa; background: #f5f5f5; border-radius: 4px;
-      cursor: pointer; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 6px;
-    }
-    .btn-action:hover { background: #e0e0e0; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <!-- Barra Superior con Botón de Regreso -->
-  <div class="header-bar">
-    <h2>Contabilidad</h2>
-    <button class="btn-regresar" id="btn-regresar">← Menú Principal</button>
-  </div>
-
-  <!-- Pestañas Superiores -->
-  <div class="nav-tabs">
-    <div class="tab">Plan de Cuentas</div>
-    <div class="tab">Cierre del período</div>
-    <div class="tab">Cuentas de enlace</div>
-    <div class="tab active">Diario General</div>
-  </div>
-
-  <!-- Panel Principal -->
   <div class="panel-container">
-    <div class="filter-group">
-      <label for="filtro-asientos">Asientos por:</label>
-      <select id="filtro-asientos">
-        <option>Todos los Asientos</option>
-      </select>
+    <div class="header-flex">
+      <h1>Contabilidad</h1>
+      <button id="btn-menu">← Menú Principal</button>
     </div>
-
-    <p style="font-weight: bold; margin-bottom: 10px;">- Total de Asientos 1</p>
 
     <table>
       <thead>
@@ -89,28 +26,26 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td>1</td><td>11/04/2026</td><td>DIA</td><td>ASIE</td><td>1101</td><td>Caja General</td></tr>
-        <tr><td>1</td><td>11/04/2026</td><td>DIA</td><td>ASIE</td><td>1102</td><td>Bancos</td></tr>
-        <tr><td>1</td><td>11/04/2026</td><td>DIA</td><td>ASIE</td><td>1201</td><td>Cuentas por Cobrar</td></tr>
-        <tr><td>1</td><td>11/04/2026</td><td>DIA</td><td>ASIE</td><td>1301</td><td>Inventario</td></tr>
-        <tr><td>1</td><td>11/04/2026</td><td>DIA</td><td>ASIE</td><td>1401</td><td>Mobiliario</td></tr>
-        <tr><td>1</td><td>11/04/2026</td><td>DIA</td><td>ASIE</td><td>1402</td><td>Equipo de Cómputo</td></tr>
-        <tr><td>1</td><td>11/04/2026</td><td>DIA</td><td>ASIE</td><td>1501</td><td>Vehículo</td></tr>
-        <tr><td>1</td><td>11/04/2026</td><td>DIA</td><td>ASIE</td><td>2101</td><td>Cuentas por Pagar</td></tr>
-        <tr><td>1</td><td>11/04/2026</td><td>DIA</td><td>ASIE</td><td>3101</td><td>Capital Social</td></tr>
+        <tr>
+          <td>1</td>
+          <td>11/04/2026</td>
+          <td>DIA</td>
+          <td>ASIE</td>
+          <td>1101</td>
+          <td>Caja General</td>
+        </tr>
       </tbody>
     </table>
 
-    <div class="table-footer">Balance General</div>
-
     <div class="actions-bar">
-      <button class="btn-action">📝 Crear Asiento</button>
-      <button class="btn-action">🔄 Modificar Asto.</button>
-      <button class="btn-action">❌ Anular Asto.</button>
-      <button class="btn-action" style="color: #888;" disabled>🗑️ Eliminar Asto.</button>
+      <button class="btn-action" id="btn-crear-asiento">Crear Asiento</button>
+      <button class="btn-action">Modificar Asto.</button>
+      <button class="btn-action">Anular Asto.</button>
+      <button class="btn-action" style="color: #888;" disabled>Eliminar Asto.</button>
     </div>
   </div>
 
+  <script src="utils.js"></script>
   <script src="contabilidad.js"></script>
 </body>
 </html>

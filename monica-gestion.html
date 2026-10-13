@@ -4,66 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mónica Gestión - Sistema Contable</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #2f6ea8;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .header-title {
-      color: white;
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-      margin-bottom: 30px;
-      text-align: center;
-    }
-
-    .modulos-container {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      width: 280px;
-    }
-
-    .card-modulo {
-      background: #ffffff;
-      border: 2px solid #b0c4de;
-      border-radius: 8px;
-      padding: 15px 20px;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 2px 4px 8px rgba(0,0,0,0.2);
-      transition: all 0.2s ease;
-      user-select: none;
-    }
-
-    .card-modulo:hover {
-      transform: scale(1.03);
-      border-color: #000080;
-      box-shadow: 3px 6px 12px rgba(0,0,0,0.3);
-    }
-
-    .card-modulo span {
-      font-size: 18px;
-      font-weight: bold;
-      color: #701a75;
-    }
-
-    .card-modulo span u {
-      text-decoration: underline;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -86,6 +27,7 @@
     </div>
   </div>
 
+  <script src="utils.js"></script>
   <script src="monica-gestion.js"></script>
 </body>
 </html>
