@@ -3,12 +3,18 @@
  */
 
 /**
- * Navega a otra página usando la API expuesta por preload
+ * Navega a otra vista.
+ * En Electron delega en el proceso principal (IPC 'navegar-a'), que resuelve
+ * el archivo dentro de la carpeta src/. En un navegador normal usa una
+ * navegación relativa convencional.
  * @param {string} pagina - Nombre del archivo HTML a cargar
  */
 function navegarA(pagina) {
+    if (!pagina) return;
     if (window.api && typeof window.api.navegarA === 'function') {
         window.api.navegarA(pagina);
+    } else {
+        window.location.href = pagina;
     }
 }
 
