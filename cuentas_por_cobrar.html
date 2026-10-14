@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Mónica 9 · Cuentas por Cobrar</title>
+<title>Contavex · Cuentas por Cobrar</title>
 <style>
   :root{
     --bg:#070a0f; --panel:#0e151f; --card:#101a26; --card2:#0c1420; --line:#1c2836; --line2:#27394d;
@@ -32,7 +32,7 @@
   header .sub{font-size:11.5px;color:var(--muted)}
   .chip{margin-left:auto;font-size:11px;color:var(--amber2);background:var(--amber-soft);border:1px solid rgba(245,158,11,.35);border-radius:999px;padding:6px 12px;font-weight:600;white-space:nowrap}
   .chip.ok{color:var(--green);background:var(--green-soft);border-color:rgba(52,211,153,.35)}
-  main{padding:22px;max-width:1220px;margin:0 auto}
+  main{width:100%;padding:20px;margin:0;min-height:calc(100vh - 200px)}
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
   .stat{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;position:relative;overflow:hidden}
   .stat::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--amber)}
@@ -43,7 +43,8 @@
   .stat .v{font-size:21px;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums}
   .stat .v small{font-size:12px;font-weight:600;color:var(--muted)}
   .stat .d{font-size:11.5px;color:var(--dim);margin-top:3px}
-  .layout{display:grid;grid-template-columns:350px 1fr;gap:18px;margin-top:18px;align-items:start}
+  .layout{display:grid;grid-template-columns:1fr;gap:20px;margin-top:20px;align-items:start}
+@media(min-width:1024px){.layout{grid-template-columns:180px 1fr}}
   .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--radius)}
   .card h2{margin:0;font-size:13px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:9px}
   .card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber)}
@@ -114,7 +115,7 @@
   .modal .acc .btn{flex:1;margin:0}
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#111a26;border:1px solid var(--amber);color:var(--amber2);padding:11px 18px;border-radius:10px;font-size:13px;box-shadow:0 12px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:60}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  footer{max-width:1220px;margin:20px auto 0;padding:0 22px 20px;display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--dim)}
+  footer{width:100%;padding:20px 0 0 0;display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--dim);justify-content:space-between}
   footer b{color:var(--amber2)}
   @media(max-width:940px){.layout{grid-template-columns:1fr}.form-card{position:static}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -123,8 +124,16 @@
   <header>
     <div class="logo">9</div>
     <div>
-      <h1>Mónica 9 · <span>Cuentas por Cobrar</span></h1>
+      <h1>Contavex · <span>Cuentas por Cobrar</span></h1>
       <div class="sub">Créditos, facturas y cobranza · Nicaragua</div>
+    </div>
+    <div class="menubar" id="menubar">
+      <span>Archivo</span>
+      <span>Editar</span>
+      <span>Ver</span>
+      <span>Procesos</span>
+      <span>Reportes</span>
+      <span>Ayuda</span>
     </div>
     <span class="chip" id="chip">Conectando…</span>
   </header>
@@ -153,6 +162,7 @@
         <input id="fecha" type="date"/>
         <button class="btn primary" id="btnAgregar">+ Registrar crédito</button>
         <button class="btn ghost" id="btnLimpiar">Limpiar formulario</button>
+        <button class="btn ghost" id="btnCancelar">Cancelar</button>
         <p class="hint">Los registros se guardan automáticamente. US$ 1 = C$ 19.960.</p>
       </aside>
 
@@ -167,6 +177,7 @@
             <option value="Pagado">Pagados</option>
           </select>
           <button class="btn sm clean" id="btnRecargar">↻ Recargar</button>
+          <button class="btn sm primary" id="btnImprimir">🖨 Imprimir listado</button>
         </div>
         <div class="scroll">
           <table class="tbody" id="tabla">
@@ -187,11 +198,14 @@
     </div>
   </main>
 
-  <footer>
-    <span>Sistema contable <b>Mónica 9</b></span>
+<footer>
+    <span>Sistema contable <b>Contavex</b></span>
     <span>Moneda: Córdobas (C$) · Tasa oficial US$ 1 = C$ 19.960</span>
     <span>Almacenamiento: <b id="origen">—</b></span>
-  </footer>
+    <span style="margin-left:auto">
+      <a href="inventario.html" style="color:var(--amber); text-decoration:none; padding:3px 6px; border-radius:4px">Inv ↑</a>
+    </span>
+</footer>
 
   <div class="modal" id="modal">
     <div class="box">
@@ -245,6 +259,10 @@
     return 'Pendiente';
   }
   function esVencida(c){ return (c.estado==='Pagado' ? false : diasVencido(c.fechaVencimiento) > 0); }
+
+  function toolbar(mensaje){
+    toast(mensaje);
+  }
 
   function seed(){
     return [
@@ -346,6 +364,7 @@
       var acciones = saldo > 0
         ? '<button class="btn sm abonar" data-act="abonar" data-id="'+esc(c.id)+'">Abonar</button>'
         : '<span class="btn sm" style="opacity:.45;cursor:default;background:var(--green-soft);color:var(--green)">Saldada</span>';
+      acciones += ' <button class="btn sm edit" data-act="edit" data-id="'+esc(c.id)+'">Editar</button>';
       acciones += ' <button class="btn sm del" data-act="del" data-id="'+esc(c.id)+'">Eliminar</button>';
       return '<tr class="'+(vnc?'vencida':'')+'">'
         + '<td class="cli"><strong title="'+esc(c.cliente)+'">'+esc(c.cliente)+'</strong><small>'+esc(c.factura||'s/n')+' · '+(c.abonos||[]).length+' abono'+( (c.abonos||[]).length!==1?'s':'')+'</small></td>'
@@ -444,6 +463,7 @@
       }
       else toast((n && n.error) || 'No se pudo guardar.');
     });
+    return false;
   }
 
   function abrirModal(id){
@@ -485,10 +505,50 @@
     }
   }
 
+  function mostrarAyuda(){
+    toolbar('Contavex - Sistema contable');
+    var m = document.createElement('div');
+    m.innerHTML = '<h3>Contavex</h3>' +
+      '<p>Sistema contable para Nicaragua</p>' +
+      '<p>Tasa: US$ 1 = C$ 19.960</p>' +
+      '<p>Contact: soporte@monica9.gob.ni</p>';
+    toast(m.textContent);
+  }
+
+  function abrirVistaReportes(){
+    toolbar('Reportes Contavex');
+    var r = document.createElement('div');
+    r.className = 'card';
+    var porC = registros.filter(function(c){ return c.estado !== 'Pagado' }).reduce(function(s,c){ return s + Number(c.montoTotal||0); }, 0);
+    var ab = registros.reduce(function(s,c){ return s + Number(sumAbonos(c)); }, 0);
+    var vn = registros.filter(esVencida).length;
+    r.innerHTML = '<h3>Reportes Contavex</h3>' +
+      '<p>Total por cobrar: ' + fmtC(porC) + '</p>' +
+      '<p>Total abonado: ' + fmtC(ab) + '</p>' +
+      '<p>Cuentas vencidas: ' + vn + '</p>' +
+      '<button class="btn sm" style="margin-top:8px" onclick="this.parentElement.parentElement.remove()">Cerrar</button>';
+    $('toast').textContent = '';
+    $('toast').appendChild(r);
+  }
+
   function onTabla(e){
     var b = e.target.closest('button[data-act]'); if(!b) return;
     var id = b.getAttribute('data-id'), act = b.getAttribute('data-act');
     if(act==='abonar'){ abrirModal(id); }
+    else if(act==='edit'){
+      var c = registros.find(function(x){return x.id===id;});
+      if(c){
+        $('factura').value = c.factura || '';
+        $('cliente').value = c.cliente || '';
+        $('monto').value = c.montoTotal || '';
+        $('abonoInicial').value = (c.abonos && c.abonos.length > 0) ? c.abonos[0].monto : '';
+        $('fecha').value = c.fechaVencimiento || hoyISO();
+        cerrarModal();
+        toast('Factura '+c.factura+' cargada para edición.');
+      } else {
+        toast('No se encontró la factura.');
+      }
+    }
     else if(act==='del'){
       if(!confirm('¿Eliminar la cuenta "'+(registros.find(function(x){return x.id===id;})||{}).cliente+'"?')) return;
       var ok = hasIPC ? false : eliminarLocal(id);
@@ -500,7 +560,9 @@
   function init(){
     $('btnAgregar').addEventListener('click', registrar);
     $('btnLimpiar').addEventListener('click', limpiar);
+    $('btnCancelar').addEventListener('click', function(){ limpiar(); cerrarModal(); toast('Formulario cancelado.'); });
     $('btnRecargar').addEventListener('click', function(){ render(); });
+    $('btnImprimir').addEventListener('click', function(){ abrirVistaReportes(); });
     $('buscar').addEventListener('input', function(){ busqueda=this.value; render(); });
     $('filtro').addEventListener('change', function(){ filtro=this.value; render(); });
     $('tabla').addEventListener('click', onTabla);
@@ -511,6 +573,25 @@
     ['factura','cliente','monto','abonoInicial','fecha'].forEach(function(id){
       $(id).addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); if(id==='fecha'){ registrar(e); } } });
     });
+    
+    // Menú superior handlers
+    var menubar = $('menubar');
+    if(menubar){
+      menubar.querySelectorAll('span').forEach(function(span, idx){
+        span.addEventListener('click', function(e){
+          var accion = span.textContent.trim();
+          switch(accion){
+            case 'Archivo': toast('Menú Archivo - Nueva cuenta, Importar, Exportar'); break;
+            case 'Editar': toast('Menú Editar - Modificar selección'); break;
+            case 'Ver': toast('Menú Ver - Mostrar/ocultar campos'); break;
+            case 'Procesos': toast('Menú Procesos - Actualizar estados, Cobranza'); break;
+            case 'Reportes': abrirVistaReportes(); break;
+            case 'Ayuda': mostrarAyuda(); break;
+          }
+        });
+      });
+    }
+    
     setIPC(false);
     var cargar = hasIPC ? ipcListar() : Promise.resolve(cargarLocal());
     cargar.then(function(){ setIPC(hasIPC); render(); });

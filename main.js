@@ -239,7 +239,7 @@ ipcMain.handle('cxc:abonar', (e, { id, monto }) => {
 
 function vistaInicial() {
   const arg = process.argv.find(a => a.startsWith('--vista='));
-  const vista = (arg ? arg.split('=')[1] : process.env.M9_VISTA) || 'cuentas_por_cobrar';
+  const vista = (arg ? arg.split('=')[1] : process.env.M9_VISTA) || 'inventario';
   return vista === 'inventario' ? 'inventario.html' : 'cuentas_por_cobrar.html';
 }
 

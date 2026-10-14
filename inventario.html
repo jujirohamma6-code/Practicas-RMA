@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Mónica 9 — Inventario</title>
+<title>Contavex — Inventario</title>
 <style>
   :root{
     --navy:#0a246a; --navy2:#2b6fd6; --accent:#2f7dff; --accent-d:#1e63d6;
@@ -164,21 +164,24 @@
 <div class="desktop">
   <div class="win">
     <div class="titlebar">
-      <div class="tb-title"><span class="tb-ico">▦</span> Mónica 9 — Inventario</div>
+      <div class="tb-title"><span class="tb-ico">▦</span> Contavex — Inventario</div>
       <div class="tb-btns"><button class="tbb" title="Minimizar">–</button><button class="tbb" title="Maximizar">▢</button><button class="tbb close" title="Cerrar">✕</button></div>
     </div>
-    <div class="menubar"><span>Archivo</span><span>Editar</span><span>Ver</span><span>Procesos</span><span>Inventario</span><span>Ayuda</span></div>
+    <div class="menubar" id="menubar"><span>Archivo</span><span>Editar</span><span>Ver</span><span>Procesos</span><span>Inventario</span><span>Ayuda</span></div>
     <div class="tabbar" id="tabs"></div>
     <div class="content" id="content"></div>
     <div class="statusbar">
       <span class="sb"><span class="dot"></span><span id="status">Listo</span></span>
       <span class="sb" id="tc">Tipo de cambio: US$ 1 = C$ 19.960</span>
       <span class="sb" id="clock"></span>
+      <div style="margin-left:auto">
+        <a class="sb" href="cuentas_por_cobrar.html" style="color:var(--accent); text-decoration:none; padding:3px 6px; border-radius:4px; background:rgba(245,158,11,.15); margin-left:8px">CxC →</a>
+      </div>
     </div>
   </div>
   <div class="taskbar">
     <button class="start"><span>⊞</span> Inicio</button>
-    <button class="task">Mónica 9 — Inventario</button>
+    <button class="task">Contavex — Inventario</button>
     <span class="sb" style="border:none;background:transparent;color:#dfe9ff">Córdobas · Nicaragua</span>
     <div class="tray"><span id="trayClock"></span></div>
   </div>
@@ -195,6 +198,11 @@ const num = n => (Number(n)||0).toLocaleString('es-NI',{minimumFractionDigits:2,
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const status = m => { $('status').textContent = m; };
+
+/* ---------- Toast / alertas ---------- */
+let toastTimeout = null;
+function toast(m){ var t = $('toast'); if(!t){ const o = document.createElement('div'); o.className='toast'; o.textContent=m; document.body.appendChild(o); } else { t.textContent = m; t.classList.add('show'); } clearTimeout(toastTimeout); toastTimeout = setTimeout(function(){ t.classList.remove('show'); }, 2600); }
+function alerta(m){ toast(m); }
 
 /* ---------- Fechas (deterministas, año en curso) ---------- */
 const HOY = new Date();
@@ -445,6 +453,7 @@ function openDialog(id){
     }
     if(cfg.buscar){
       tools.innerHTML += '<div class="fgroup"><label class="flabel">Buscar</label><input type="text" class="fld" id="dlg-texto" placeholder="'+esc(cfg.buscar)+'"></div>';
+      tools.innerHTML += '<button class="btn btn-ghost" id="dlg-limpiar">Limpiar</button>';
     }
     tools.innerHTML += '<div style="display:flex;gap:8px"><button class="btn btn-primary" id="dlg-buscar">Buscar</button><button class="btn btn-ghost" id="dlg-aceptar">Aceptar</button></div>';
     body.appendChild(tools);
@@ -457,9 +466,12 @@ function openDialog(id){
 
   const foot = document.createElement('div');
   foot.className = 'dlg-foot';
-  foot.innerHTML = '<button class="btn" id="dlg-imprimir">Imprimir</button>'+
+  foot.innerHTML = '<button class="btn btn-primary" id="dlg-guardar">Guardar/Aceptar</button>'+
+    '<button class="btn" id="dlg-imprimir">Imprimir</button>'+
     '<button class="btn" id="dlg-color">Cambiar color</button>'+
     '<button class="btn btn-ghost" id="dlg-cancelar">Cancelar</button>'+
+    '<button class="btn btn-ghost" id="dlg-editar">Editar</button>'+
+    '<button class="btn btn-ghost" id="dlg-eliminar">Eliminar</button>'+
     '<button class="btn btn-primary" id="dlg-salir">Salir</button>';
 
   dlg.appendChild(head); dlg.appendChild(body); dlg.appendChild(foot);
@@ -484,6 +496,22 @@ function openDialog(id){
   $('dlg-color').addEventListener('click', function(){ openPalette(this, '#0a246a', c=> dlg.style.setProperty('--dlg-accent', c)); });
   $('dlg-cancelar').addEventListener('click', ()=> cerrarDialogo());
   $('dlg-salir').addEventListener('click', ()=> cerrarDialogo());
+  $('dlg-guardar').addEventListener('click', function(){
+    var texto = cfg.buscar ? ($('dlg-texto').value.trim().toLowerCase()) : '';
+    if(!texto){ toast('Ingrese texto o criterio de búsqueda.'); $('dlg-texto').focus(); return; }
+    toast('Guardado: '+cfg.title);
+    cerrarDialogo();
+  });
+  $('dlg-limpiar').addEventListener('click', function(){ $('dlg-texto').value = ''; toast('Campos limpiados.'); });
+  $('dlg-editar').addEventListener('click', function(){
+    var selected = registros.find(function(r){ return matchText(r.codigo+' '+r.nombre, $('dlg-texto').value); });
+    if(selected){ toast('Producto seleccionado para editar: '+selected.nombre); }
+    else{ toast('No hay producto seleccionado.'); }
+  });
+  $('dlg-eliminar').addEventListener('click', function(){
+    if(confirm('¿Eliminar el producto seleccionado?')){ toast('Eliminación solicitada (requiere IPC).'); }
+    else{ toast('Eliminación cancelada.'); }
+  });
 
   render();
 }
@@ -740,8 +768,11 @@ function productsUI(){
     '<div class="sec-head"><span class="k"></span>Gestión de Productos '+
       '<span class="val" id="p-modo" style="margin-left:auto;font-weight:600"></span></div>'+
     '<div style="padding:12px">'+
+      '<div style="margin-bottom:12px">'+
+        '<input type="text" class="fld" id="p-buscar" placeholder="Buscar por código, nombre, categoría o bodega...">'+
+      '</div>'+
       '<div class="formgrid">'+
-        '<div class="fgroup"><label class="flabel">Código <span class="req">*</span></label><input type="text" class="fld" id="p-codigo" placeholder="P-0000"></div>'+
+        '<div class="fgroup"><label class="flabel">Código <span class="req">*</span></label><input type="text" class="fld" id="p-codigo" placeholder=""></div>'+
         '<div class="fgroup"><label class="flabel">Nombre <span class="req">*</span></label><input type="text" class="fld" id="p-nombre" placeholder="Nombre del producto"></div>'+
         '<div class="fgroup"><label class="flabel">Categoría</label><input type="text" class="fld" id="p-categoria" placeholder="Categoría"></div>'+
         '<div class="fgroup"><label class="flabel">Bodega</label><input type="text" class="fld" id="p-bodega" placeholder="Bodega"></div>'+
@@ -755,8 +786,9 @@ function productsUI(){
         '</div>'+
       '</div>'+
       '<p class="sub" style="margin:10px 0 8px">Los campos marcados con <span class="req">*</span> son obligatorios. Costo y precio deben ser mayores que cero; la existencia no puede ser negativa.</p>'+
-      '<div id="p-tabla"></div>'+
-    '</div></div>';
+    '</div>'+
+    '<div id="p-tabla"></div>'+
+  '</div></div>';
 }
 
 function mapProducto(r){
@@ -775,47 +807,88 @@ function actualizarModo(){
   e.textContent = hasIPC ? ('SQLite · contabilidad.db' + (editandoCodigo ? (' · editando '+editandoCodigo) : '')) : 'Modo local (sin SQLite)';
 }
 
-function renderProductos(){
-  const host = $('p-tabla'); if(!host) return;
-  const rows = PRODUCTOS.slice().sort(function(a,b){ return String(a.nombre).localeCompare(String(b.nombre)); });
-  let tv=0, tu=0;
-  rows.forEach(function(p){ tv += p.valor; tu += p.existencia; });
-  if(!rows.length){
-    host.innerHTML = '<p class="empty">No hay productos registrados. Use el formulario de arriba para agregar el primero.</p>';
-    return;
+function renderProductos(filtro){
+  try {
+    // Asegurar que PRODUCTOS esté definido como arreglo
+    if(typeof PRODUCTOS === 'undefined' || PRODUCTOS === null){ PRODUCTOS = []; }
+    const host = $('p-tabla'); if(!host) return;
+    var rows = PRODUCTOS.slice();
+    
+    // Aplicar filtro si se proporciona
+    if(filtro){
+      var f = filtro.toLowerCase();
+      rows = rows.filter(function(p){
+        return p.codigo.toLowerCase().indexOf(f) !== -1 ||
+          p.nombre.toLowerCase().indexOf(f) !== -1 ||
+          (p.categoria && p.categoria.toLowerCase().indexOf(f) !== -1) ||
+          (p.bodega && p.bodega.toLowerCase().indexOf(f) !== -1);
+      });
+    }
+    
+    // ORDENAMIENTO ALFANUMÉRICO ESTRICTO: P-1, P-2, ..., P-9, P-10, P-11 ...
+    rows.sort(function(a, b) {
+      return String(a.codigo).localeCompare(String(b.codigo), undefined, { numeric: true, sensitivity: 'base' });
+    });
+    
+    // Resto del código...
+    
+    let tv=0, tu=0;
+    rows.forEach(function(p){ tv += p.valor; tu += p.existencia; });
+    // Renderizar: si hay datos, construir tabla; si no, mensaje de vacío
+    let h = '';
+    if(rows.length > 0){
+      h = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'+
+        '<th>Código</th><th>Producto</th><th>Categoría</th><th>Bodega</th>'+
+        '<th class="num">Costo</th><th class="num">Precio</th><th class="num">Existencia</th><th class="num">Mínimo</th><th class="num">Valor</th><th>Acciones</th>'+
+        '</tr></thead><tbody>';
+      rows.forEach(function(p){
+        h += '<tr>'+
+          '<td>'+esc(p.codigo)+'</td><td>'+esc(p.nombre)+'</td>'+
+          '<td>'+esc(p.categoria||'—')+'</td><td>'+esc(p.bodega||'—')+'</td>'+
+          '<td class="num">'+money(p.costo)+'</td><td class="num">'+money(p.precio)+'</td>'+
+          '<td class="num">'+num(p.existencia)+'</td><td class="num">'+num(p.minimo)+'</td><td class="num">'+money(p.valor)+'</td>'+
+          '<td><button class="btn" style="padding:4px 10px" data-edit="'+esc(p.codigo)+'">Editar</button> '+
+            '<button class="btn" style="padding:4px 10px" data-del="'+esc(p.codigo)+'">Eliminar</button>'+
+            '<button class="btn" style="padding:4px 10px" data-ajustar="'+esc(p.codigo)+'">Ajustar</button></td>'+
+        '</tr>';
+      });
+      h += '</tbody><tfoot><tr><td>Totales ('+rows.length+')</td><td></td><td></td><td></td>'+
+        '<td></td><td></td><td class="num">'+num(tu)+'</td><td></td><td class="num">'+money(tv)+'</td><td></td></tr></tfoot></table></div>';
+    } else {
+      h = '<p class="empty">No hay productos registrados. Use el formulario de arriba para agregar el primero.</p>';
+    }
+    host.innerHTML = h;
+  } catch(e){
+    console.error('Error en renderProductos:', e);
+    // Tabla de emergencia visual directamente en #p-tabla
+    const host = $('p-tabla'); if(host){
+      host.innerHTML = '<p class="empty" style="color:red; padding:12px">Error al renderizar la tabla: ' + (e.message||'unknown') + '. Use el formulario para volver a cargar.</p>';
+    }
   }
-  let h = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'+
-    '<th>Código</th><th>Producto</th><th>Categoría</th><th>Bodega</th>'+
-    '<th class="num">Costo</th><th class="num">Precio</th><th class="num">Existencia</th><th class="num">Mínimo</th><th class="num">Valor</th><th>Acciones</th>'+
-    '</tr></thead><tbody>';
-  rows.forEach(function(p){
-    h += '<tr>'+
-      '<td>'+esc(p.codigo)+'</td><td>'+esc(p.nombre)+'</td>'+
-      '<td>'+esc(p.categoria||'—')+'</td><td>'+esc(p.bodega||'—')+'</td>'+
-      '<td class="num">'+money(p.costo)+'</td><td class="num">'+money(p.precio)+'</td>'+
-      '<td class="num">'+num(p.existencia)+'</td><td class="num">'+num(p.minimo)+'</td><td class="num">'+money(p.valor)+'</td>'+
-      '<td><button class="btn" style="padding:4px 10px" data-edit="'+esc(p.codigo)+'">Editar</button> '+
-        '<button class="btn" style="padding:4px 10px" data-del="'+esc(p.codigo)+'">Eliminar</button></td>'+
-    '</tr>';
-  });
-  h += '</tbody><tfoot><tr><td>Totales ('+rows.length+')</td><td></td><td></td><td></td>'+
-    '<td></td><td></td><td class="num">'+num(tu)+'</td><td></td><td class="num">'+money(tv)+'</td><td></td></tr></tfoot></table></div>';
-  host.innerHTML = h;
 }
 
 function leerForm(){
+  const getVal = (id) => {
+    const el = document.getElementById(id) || document.querySelector('#' + id) || document.querySelector('[name="' + id + '"]');
+    return el ? el.value.trim() : '';
+  };
+
   return {
-    codigo: ($('p-codigo').value||'').trim(), nombre: ($('p-nombre').value||'').trim(),
-    categoria: ($('p-categoria').value||'').trim(), bodega: ($('p-bodega').value||'').trim(),
-    costo: $('p-costo').value, precio: $('p-precio').value,
-    existencia: $('p-existencia').value, minimo: $('p-minimo').value
+    codigo: getVal('p-codigo'),
+    nombre: getVal('p-nombre'),
+    categoria: getVal('p-categoria'),
+    bodega: getVal('p-bodega'),
+    costo: Number(getVal('p-costo') || 0),
+    precio: Number(getVal('p-precio') || 0),
+    existencia: Number(getVal('p-existencia') || 0),
+    minimo: Number(getVal('p-minimo') || 0)
   };
 }
 function validarProducto(d){
   if(!d.codigo){ toast('El código del producto es requerido.','error'); $('p-codigo').focus(); return null; }
   if(!d.nombre){ toast('El nombre del producto es requerido.','error'); $('p-nombre').focus(); return null; }
-  if(d.costo==='' || !isFinite(Number(d.costo)) || Number(d.costo)<=0){ toast('El costo debe ser un número mayor que cero.','error'); $('p-costo').focus(); return null; }
-  if(d.precio==='' || !isFinite(Number(d.precio)) || Number(d.precio)<=0){ toast('El precio de venta debe ser un número mayor que cero.','error'); $('p-precio').focus(); return null; }
+  if(d.costo==='' || !isFinite(Number(d.costo)) || Number(d.costo)<0){ toast('El costo debe ser un número mayor o igual a cero.','error'); $('p-costo').focus(); return null; }
+  if(d.precio==='' || !isFinite(Number(d.precio)) || Number(d.precio)<0){ toast('El precio de venta debe ser un número mayor o igual a cero.','error'); $('p-precio').focus(); return null; }
   const ex = d.existencia==='' ? 0 : Number(d.existencia);
   if(!isFinite(ex) || ex<0){ toast('La existencia no puede ser negativa.','error'); $('p-existencia').focus(); return null; }
   const mi = d.minimo==='' ? 0 : Number(d.minimo);
@@ -824,10 +897,10 @@ function validarProducto(d){
     costo:Number(d.costo), precio:Number(d.precio), existencia:ex, minimo:mi };
 }
 function limpiarForm(){
-  ['p-codigo','p-nombre','p-categoria','p-bodega','p-costo','p-precio','p-existencia','p-minimo'].forEach(function(id){ if($(id)) $(id).value=''; });
+  ['p-nombre','p-categoria','p-bodega','p-costo','p-precio','p-existencia','p-minimo'].forEach(function(id){ if($(id)) $(id).value=''; });
   editandoCodigo = null;
   if($('p-codigo')) $('p-codigo').disabled = false;
-  actualizarModo();
+  hideForm(); $('status').textContent = 'Listo';
 }
 
 function recargar(){
@@ -868,8 +941,8 @@ function guardarProducto(){
 }
 
 function onTablaProductos(e){
-  const t = e.target.closest('[data-edit],[data-del]'); if(!t) return;
-  const cod = t.getAttribute('data-edit') || t.getAttribute('data-del');
+  const t = e.target.closest('[data-edit],[data-del],[data-ajustar]'); if(!t) return;
+  const cod = t.getAttribute('data-edit') || t.getAttribute('data-del') || t.getAttribute('data-ajustar');
   const p = PRODUCTOS.find(function(x){ return x.codigo===cod; }); if(!p) return;
   if(t.hasAttribute('data-edit')){
     editandoCodigo = p.codigo;
@@ -880,16 +953,34 @@ function onTablaProductos(e){
     actualizarModo(); toast('Editando '+p.nombre,'info'); $('p-nombre').focus();
     return;
   }
-  if(!confirm('¿Eliminar el producto "'+p.nombre+'" ('+p.codigo+')?')) return;
-  if(hasIPC){
-    Promise.resolve(window.api.eliminarProducto(p.codigo)).then(function(r){
-      if(r && r.ok){ toast('Producto eliminado: '+p.nombre,'ok'); if(editandoCodigo===p.codigo) limpiarForm(); recargar(); }
-      else toast((r && r.error) || 'No se pudo eliminar el producto.','error');
-    }).catch(function(){ toast('No se pudo eliminar (error de IPC).','error'); });
-  } else {
-    PRODUCTOS = PRODUCTOS.filter(function(x){ return x.codigo!==p.codigo; });
-    if(editandoCodigo===p.codigo) limpiarForm();
-    toast('Producto eliminado: '+p.nombre,'ok'); renderProductos();
+  if(t.hasAttribute('data-del')){
+    if(!confirm('¿Eliminar el producto "'+p.nombre+'" ('+p.codigo+')?')) return;
+    if(hasIPC){
+      Promise.resolve(window.api.eliminarProducto(p.codigo)).then(function(r){
+        if(r && r.ok){ toast('Producto eliminado: '+p.nombre,'ok'); if(editandoCodigo===p.codigo) limpiarForm(); recargar(); }
+        else toast((r && r.error) || 'No se pudo eliminar el producto.','error');
+      }).catch(function(){ toast('No se pudo eliminar (error de IPC).','error'); });
+    } else {
+      PRODUCTOS = PRODUCTOS.filter(function(x){ return x.codigo!==p.codigo; });
+      if(editandoCodigo===p.codigo) limpiarForm();
+      toast('Producto eliminado: '+p.nombre,'ok'); renderProductos();
+    }
+    return;
+  }
+  if(t.hasAttribute('data-ajustar')){
+    var nuevoStock = prompt('Ingrese el nuevo stock para '+p.nombre+' (código: '+p.codigo+')', p.existencia);
+    if(nuevoStock===null) return;
+    nuevoStock = Number(nuevoStock);
+    if(isNaN(nuevoStock) || nuevoStock<0){ toast('Stock inválido. Debe ser un número >= 0.','error'); return; }
+    if(hasIPC){
+      Promise.resolve(window.api.actualizarProducto(p.codigo, {existencia:nuevoStock})).then(function(r){
+        if(r && r.ok){ toast('Stock actualizado: '+p.nombre+' → '+nuevoStock,'ok'); recargar(); }
+        else toast((r && r.error) || 'No se pudo actualizar el stock.','error');
+      }).catch(function(){ toast('Error actualizando stock (error de IPC).','error'); });
+    } else {
+      var idx = PRODUCTOS.findIndex(function(x){ return x.codigo===p.codigo; });
+      if(idx!==-1){ PRODUCTOS[idx].existencia = nuevoStock; renderProductos(); toast('Stock actualizado: '+p.nombre+' → '+nuevoStock,'ok'); }
+    }
   }
 }
 
@@ -897,19 +988,187 @@ function bindProductos(){
   if($('p-guardar')) $('p-guardar').addEventListener('click', guardarProducto);
   if($('p-limpiar')) $('p-limpiar').addEventListener('click', function(){ limpiarForm(); toast('Formulario limpio.','info'); });
   if($('p-tabla')) $('p-tabla').addEventListener('click', onTablaProductos);
+  if($('p-buscar')) $('p-buscar').addEventListener('input', function(){ renderProductos(this.value); });
+}
+
+/* ---------- Funciones de Acción y Validación ---------- */
+function validarProducto(){
+  const nombre = $('p-nombre').value.trim();
+  const costo = $('p-costo').value.trim();
+  const precio = $('p-precio').value.trim();
+  if(!nombre){ toast('El nombre del producto es obligatorio.','error'); $('p-nombre').focus(); return false; }
+  if(!costo || isNaN(costo) || Number(costo) <= 0){ toast('El costo debe ser un número mayor que cero.','error'); $('p-costo').focus(); return false; }
+  if(!precio || isNaN(precio) || Number(precio) <= 0){ toast('El precio de venta debe ser un número mayor que cero.','error'); $('p-precio').focus(); return false; }
+  return true;
+}
+
+// Agregado: Verificación de código duplicado antes de guardar
+function verificarCodigoDuplicado(codigo){
+  return PRODUCTOS.some(function(p){ return p.codigo === codigo; });
+}
+
+function guardarProducto(){
+  const d = validarProducto(leerForm()); if(!d) return;
+  const esEdicion = !!editandoCodigo;
+  
+  // Verificar si el código ya existe en la lista local (solo para nuevos productos, no en edición)
+  if(!esEdicion && verificarCodigoDuplicado(d.codigo)){
+    toast('El código de producto "'+d.codigo+'" ya existe. Use un código diferente.','error');
+    $('p-codigo').focus();
+    return;
+  }
+  
+  if(hasIPC){
+    const p = esEdicion ? window.api.actualizarProducto(editandoCodigo, d) : window.api.crearProducto(d);
+    Promise.resolve(p).then(function(r){
+      if(r && r.ok){
+        // Actualizar variable local PRODUCTOS para reflejar cambio al instante
+        if(esEdicion){
+          const j = PRODUCTOS.findIndex(function(x){ return x.codigo===editandoCodigo; });
+          if(j!==-1){ PRODUCTOS[j] = mapProducto(Object.assign({}, d, { codigo: editandoCodigo })); }
+          // Re-habilitar campo de código después de guardar edición
+          if($('p-codigo')) $('p-codigo').disabled = false;
+        } else {
+          const j = PRODUCTOS.findIndex(function(x){ return x.codigo===d.codigo; });
+          if(j!==-1){ PRODUCTOS[j] = mapProducto(d); } else { PRODUCTOS.push(mapProducto(d)); }
+        }
+        toast((esEdicion?'Producto actualizado: ':'Producto creado: ')+((r.data&&r.data.nombre)||d.nombre),'ok');
+        renderProductos();
+      } else {
+        toast((r && r.error) || 'No se pudo guardar el producto.','error');
+      }
+    }).catch(function(){ toast('No se pudo guardar (error de IPC).','error'); });
+  } else {
+    const i = PRODUCTOS.findIndex(function(x){ return x.codigo===d.codigo; });
+    if(esEdicion){
+      const j = PRODUCTOS.findIndex(function(x){ return x.codigo===editandoCodigo; });
+      if(j===-1){ toast('El producto "'+editandoCodigo+'" no existe.','error'); return; }
+      PRODUCTOS[j] = mapProducto(Object.assign({}, d, { codigo: editandoCodigo }));
+    } else {
+      if(i!==-1){ toast('Ya existe un producto con el código "'+d.codigo+'".','error'); return; }
+      PRODUCTOS.push(mapProducto(d));
+    }
+    toast((esEdicion?'Producto actualizado: ':'Producto creado: ')+d.nombre,'ok');
+    limpiarForm(); renderProductos();
+  }
+}
+
+function limpiarForm(){
+  $('p-nombre').value = ''; $('p-categoria').value = ''; $('p-bodega').value = '';
+  $('p-costo').value = ''; $('p-precio').value = ''; $('p-existencia').value = ''; $('p-minimo').value = '';
+  editandoCodigo = null; // Resetear estado de edición
+  hideForm(); $('status').textContent = 'Listo';
+}
+
+function hideForm(){
+  $('form-producto').style.display = 'none';
+  $('contenido-productos').style.display = 'block';
+}
+
+function showForm(){
+  $('form-producto').style.display = 'block';
+  $('contenido-productos').style.display = 'none';
+  $('p-nombre').focus();
+}
+
+/* ---------- Manejo de Eventos de Tabla ---------- */
+function onTablaProductos(e){
+  const b = e.target.closest('button[data-edit],[data-del],[data-ajustar]'); if(!b) return;
+  const cod = b.getAttribute('data-edit') || b.getAttribute('data-del') || b.getAttribute('data-ajustar');
+  const p = PRODUCTOS.find(function(x){ return x.codigo===cod; }); if(!p) return;
+  if(b.hasAttribute('data-edit')){
+    // a) Busca el producto correspondiente usando el código de la fila
+    // b) Asigna editandoCodigo = p.codigo
+    editandoCodigo = p.codigo;
+    // c) Llena cada uno de los inputs del formulario con los valores actuales
+    $('p-codigo').value = p.codigo; $('p-codigo').disabled = true; // Bloquear código para que no se modifique
+    $('p-nombre').value = p.nombre;
+    $('p-categoria').value = p.categoria||'';
+    $('p-bodega').value = p.bodega||'';
+    $('p-costo').value = p.costo;
+    $('p-precio').value = p.precio;
+    $('p-existencia').value = p.existencia;
+    $('p-minimo').value = p.minimo;
+    // e) Mostrar toast indicando que se está editando
+    toast('Editando producto: '+p.nombre,'info');
+    // enfocar nombre para comenzar edición
+    $('p-nombre').focus();
+    return;
+  }
+  if(b.hasAttribute('data-del')){
+    // Lógica de eliminar (mantener la existente)
+    if(!confirm('¿Eliminar el producto "'+p.nombre+'" ('+p.codigo+')?')) return;
+    if(hasIPC){
+      Promise.resolve(window.api.eliminarProducto(p.codigo)).then(function(r){
+        if(r && r.ok){ toast('Producto eliminado: '+p.nombre,'ok'); if(editandoCodigo===p.codigo) limpiarForm(); recargar(); }
+        else toast((r && r.error) || 'No se pudo eliminar el producto.','error');
+      }).catch(function(){ toast('No se pudo eliminar (error de IPC).','error'); });
+    } else {
+      PRODUCTOS = PRODUCTOS.filter(function(x){ return x.codigo!==p.codigo; });
+      if(editandoCodigo===p.codigo) limpiarForm();
+      toast('Producto eliminado: '+p.nombre,'ok'); renderProductos();
+    }
+    return;
+  }
+  if(b.hasAttribute('data-ajustar')){
+    // Lógica de ajuste de existencia (mantener la existente)
+    var nuevoStock = prompt('Ingrese el nuevo stock para '+p.nombre+' (código: '+p.codigo+')', p.existencia);
+    if(nuevoStock===null) return;
+    nuevoStock = Number(nuevoStock);
+    if(isNaN(nuevoStock) || nuevoStock<0){ toast('Stock inválido. Debe ser un número >= 0.','error'); return; }
+    if(hasIPC){
+      Promise.resolve(window.api.actualizarProducto(p.codigo, {existencia:nuevoStock})).then(function(r){
+        if(r && r.ok){ toast('Stock actualizado: '+p.nombre+' → '+nuevoStock,'ok'); recargar(); }
+        else toast((r && r.error) || 'No se pudo actualizar el stock.','error');
+      }).catch(function(){ toast('Error actualizando stock (error de IPC).','error'); });
+    } else {
+      var idx = PRODUCTOS.findIndex(function(x){ return x.codigo===p.codigo; });
+      if(idx!==-1){ PRODUCTOS[idx].existencia = nuevoStock; renderProductos(); toast('Stock actualizado: '+p.nombre+' → '+nuevoStock,'ok'); }
+    }
+  }
 }
 
 /* ---------- Inicio ---------- */
 function init(){
-  renderShell();
-  bindCharts();
-  bindProductos();
-  recargar();
+  renderShell();                    // a) Primera: pinta layout, formulario, pestañas y #p-tabla
+  bindProductos();                  // b) Segunda: Vincula eventos de la tabla DESPUÉS de que #p-tabla existe
+  // c) Datos iniciales por defecto (SEED) asignados inmediatamente
+  setProductos(SEED);
+  // d) Renderizado inmediato de la tabla para que aparezca poblada desde el primer segundo
+  renderProductos();
+  // e) Actualizar modo visual después de pintar UI
+  actualizarModo();
+  // f) Posterior a pintar la UI inicial, si hasIPC ejecutamos listarProductos en segundo plano
+  //    y al resolver, actualizamos PRODUCTOS y volvemos a renderizar para sincronización
+  if(hasIPC){
+    Promise.resolve(window.api.listarProductos()).then(function(rows){
+      if(Array.isArray(rows) && rows.length){ setProductos(rows); renderProductos(); actualizarModo(); }
+    }).catch(function(){ console.error('Error cargando productos IPC en init'); actualizarModo(); });
+  }
   tick(); setInterval(tick,1000);
   $('overlay').addEventListener('mousedown', function(e){ if(e.target===$('overlay')) cerrarDialogo(); });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ if(paletteEl) closePalette(); else if(dlgState) cerrarDialogo(); } });
   drawAllCharts();
-  status('Listo');
+  
+  // Menú superior handlers
+  var menubar = $('menubar');
+  if(menubar){
+    menubar.querySelectorAll('span').forEach(function(span, idx){
+      span.addEventListener('click', function(e){
+        var accion = span.textContent.trim();
+        switch(accion){
+          case 'Archivo': toast('Menú Archivo - Nueva ventana, Importar, Exportar'); break;
+          case 'Editar': toast('Menú Editar - Modificar selección'); break;
+          case 'Ver': toast('Menú Ver - Mostrar/ocultar campos'); break;
+          case 'Procesos': toast('Menú Procesos - Actualizar estados, Ajustes'); break;
+          case 'Inventario': toast('Módulo Inventario activo'); break;
+          case 'Ayuda': toast('Mónica 9 - Sistema contable · Tasa: US$ 1 = C$ 19.960'); break;
+        }
+      });
+    });
+  }
+  
+status('Listo');
 }
 document.addEventListener('DOMContentLoaded', init);
 
