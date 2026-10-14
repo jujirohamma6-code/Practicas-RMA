@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MÓNICA 9 · Módulos</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg-2: #111827;
+    --bg-3: #1e293b;
+    --border: #334155;
+    --text: #f8fafc;
+    --text-soft: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #2563eb;
+    --accent-2: #1d4ed8;
+    --accent-light: #60a5fa;
+    --accent-soft: rgba(37, 99, 235, .18);
+    --shadow: 0 14px 38px rgba(0, 0, 0, .5);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+
+  body {
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1000px 520px at 12% -10%, rgba(37, 99, 235, .25), transparent 60%),
+      radial-gradient(900px 480px at 100% 0%, rgba(29, 78, 216, .18), transparent 55%),
+      var(--bg);
+    padding: 40px 24px 56px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header.hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 34px;
+  }
+
+  .mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 15px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 20px;
+    color: #fff;
+    background: linear-gradient(140deg, var(--accent), var(--accent-2));
+    box-shadow: 0 8px 22px rgba(37, 99, 235, .45);
+    flex-shrink: 0;
+  }
+
+  .hero h1 { margin: 0; font-size: 1.6rem; letter-spacing: .3px; }
+  .hero p { margin: 3px 0 0; color: var(--text-dim); font-size: .9rem; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .card {
+    position: relative;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px 24px;
+    box-shadow: var(--shadow);
+    transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    overflow: hidden;
+  }
+
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    opacity: 0;
+    transition: opacity .18s ease;
+  }
+
+  .card:hover { transform: translateY(-4px); border-color: var(--accent); background: #16203a; }
+  .card:hover::after { opacity: 1; }
+
+  .card__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    color: var(--accent-light);
+    background: var(--accent-soft);
+    border: 1px solid rgba(37, 99, 235, .35);
+    margin-bottom: 18px;
+  }
+  .card__icon svg { width: 26px; height: 26px; }
+
+  .card h2 { margin: 0 0 6px; font-size: 1.15rem; }
+  .card p { margin: 0; color: var(--text-dim); font-size: .88rem; line-height: 1.55; }
+
+  .card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 18px;
+    color: var(--accent-light);
+    font-size: .85rem;
+    font-weight: 600;
+  }
+  .card__cta svg { width: 16px; height: 16px; transition: transform .18s ease; }
+  .card:hover .card__cta svg { transform: translateX(4px); }
+
+  footer {
+    margin-top: 34px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .78rem;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    padding-top: 18px;
+  }
+
+  footer code {
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 8px;
+    color: var(--text-soft);
+    font-family: Consolas, "Courier New", monospace;
+  }
+
+  @media (max-width: 720px) {
+    .grid { grid-template-columns: 1fr; }
+    body { padding: 26px 16px 40px; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="mark">M9</div>
+      <div>
+        <h1>Software de negocios Monica</h1>
+        <p>Seleccione un módulo para comenzar</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <a class="card" href="modulo_parametros.html">
+        <div class="card__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </div>
+        <h2>Módulo Parámetros</h2>
+        <p>Centro de configuración global: datos de la empresa, accesos, tablas de impuestos y mantenimientos.</p>
+        <span class="card__cta">Abrir módulo
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </span>
+      </a>
+
+      <a class="card" href="modulo_manual.html">
+        <div class="card__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            <path d="M9 7h7M9 11h7M9 15h4"/>
+          </svg>
+        </div>
+        <h2>Manual de Usuario</h2>
+        <p>Visor de ayuda con contenido, índice, buscador y favoritos de todos los temas del sistema.</p>
+        <span class="card__cta">Abrir manual
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </span>
+      </a>
+    </div>
+
+    <footer>
+      <span>MÓNICA 9 · Prototipo Electron</span>
+      <span>Versión <code id="version">—</code> · Base <code id="dbruta">—</code></span>
+    </footer>
+  </div>
+
+  <script>
+    (async function () {
+      if (!window.api) return;
+      try {
+        document.getElementById("version").textContent = await window.api.getVersion();
+        document.getElementById("dbruta").textContent = await window.api.getDbRuta();
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+  </script>
+</body>
+</html>

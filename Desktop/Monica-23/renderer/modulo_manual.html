@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Usuario — Monica-23</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg-2: #111827;
+    --bg-3: #1e293b;
+    --bg-4: #0b1120;
+    --border: #334155;
+    --border-soft: #1e293b;
+    --text: #f8fafc;
+    --text-soft: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #2563eb;
+    --accent-2: #1d4ed8;
+    --accent-light: #60a5fa;
+    --accent-soft: rgba(37, 99, 235, .18);
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --shadow: 0 14px 38px rgba(0, 0, 0, .5);
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--bg-4) 100%);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 28px;
+    background: rgba(17, 24, 39, .85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-left h1 { font-size: 18px; font-weight: 600; color: var(--text); }
+  .badge {
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent-light);
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+  .nav-btn {
+    padding: 8px 16px; border-radius: 10px;
+    background: var(--bg-3); color: var(--text-soft);
+    border: 1px solid var(--border);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all .2s ease;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .nav-btn:hover { background: var(--accent-soft); color: var(--accent-light); border-color: var(--accent); }
+  .nav-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .nav-btn.primary:hover { background: var(--accent-2); }
+  .nav-btn.danger { background: transparent; color: #ef4444; border-color: rgba(239, 68, 68, .3); }
+  .nav-btn.danger:hover { background: rgba(239, 68, 68, .1); border-color: #ef4444; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    height: calc(100vh - 60px);
+  }
+
+  .sidebar {
+    background: var(--bg-2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-tab {
+    flex: 1; padding: 12px 8px;
+    background: transparent; border: none;
+    color: var(--text-dim); font-size: 11px; font-weight: 600;
+    cursor: pointer; text-transform: uppercase; letter-spacing: .5px;
+    transition: all .2s ease;
+    border-bottom: 2px solid transparent;
+  }
+  .sidebar-tab:hover { color: var(--text-soft); }
+  .sidebar-tab.active { color: var(--accent-light); border-bottom-color: var(--accent); }
+
+  .sidebar-search {
+    padding: 14px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .sidebar-search input {
+    width: 100%; padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--bg-3); color: var(--text);
+    border: 1px solid var(--border);
+    font-size: 13px; outline: none;
+  }
+  .sidebar-search input:focus { border-color: var(--accent); }
+
+  .sidebar-content {
+    flex: 1; overflow-y: auto; padding: 14px;
+  }
+  .sidebar-content::-webkit-scrollbar { width: 6px; }
+  .sidebar-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .topic-item {
+    padding: 10px 12px; margin-bottom: 4px;
+    border-radius: 10px; cursor: pointer;
+    font-size: 13px; color: var(--text-soft);
+    transition: all .2s ease;
+    border-left: 3px solid transparent;
+  }
+  .topic-item:hover { background: var(--bg-3); }
+  .topic-item.active {
+    background: var(--accent-soft); color: var(--accent-light);
+    border-left-color: var(--accent);
+  }
+  .topic-item .topic-icon { margin-right: 8px; }
+
+  .content-area {
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    padding: 24px 32px;
+  }
+  .content-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .content-nav {
+    display: flex; gap: 8px;
+  }
+  .content-nav .btn {
+    padding: 8px 14px; border-radius: 8px;
+    background: var(--bg-3); color: var(--text-soft);
+    border: 1px solid var(--border);
+    font-size: 12px; cursor: pointer;
+    transition: all .2s ease;
+  }
+  .content-nav .btn:hover { background: var(--accent-soft); color: var(--accent-light); }
+
+  .content-body {
+    flex: 1; overflow-y: auto;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  .content-body::-webkit-scrollbar { width: 8px; }
+  .content-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .article-title {
+    font-size: 24px; font-weight: 700; color: var(--text);
+    margin-bottom: 16px;
+  }
+  .article-meta {
+    font-size: 12px; color: var(--text-dim);
+    margin-bottom: 24px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .article-body h3 {
+    font-size: 16px; font-weight: 700; color: var(--accent-light);
+    margin: 20px 0 10px;
+  }
+  .article-body p {
+    font-size: 14px; line-height: 1.7; color: var(--text-soft);
+    margin-bottom: 12px;
+  }
+  .article-body ul, .article-body ol {
+    margin: 10px 0 12px 24px; color: var(--text-soft);
+    font-size: 14px; line-height: 1.7;
+  }
+  .article-body li { margin-bottom: 6px; }
+
+  .callout {
+    padding: 14px 18px; border-radius: 10px;
+    margin: 16px 0; font-size: 13px;
+    border-left: 4px solid;
+  }
+  .callout-info { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-light); }
+  .callout-warn { background: rgba(245, 158, 11, .1); border-color: var(--warn); color: var(--warn); }
+
+  .shortcut-hint {
+    position: fixed; bottom: 16px; right: 16px;
+    padding: 8px 14px; border-radius: 8px;
+    background: var(--bg-3); border: 1px solid var(--border);
+    font-size: 11px; color: var(--text-dim);
+  }
+  kbd {
+    padding: 2px 6px; border-radius: 4px;
+    background: var(--bg); border: 1px solid var(--border);
+    font-size: 10px; font-family: inherit; color: var(--text-soft);
+  }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-left">
+    <h1>Manual de Usuario</h1>
+    <span class="badge">Documentación</span>
+  </div>
+  <div class="topbar-right">
+    <a class="nav-btn" href="index.html">Inicio</a>
+    <a class="nav-btn" href="modulo_parametros.html">Parámetros</a>
+    <a class="nav-btn danger" href="#" onclick="window.close(); return false;">Salir</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" data-tab="temas">Temas</button>
+      <button class="sidebar-tab" data-tab="buscar">Buscar</button>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" placeholder="Buscar en el manual..." id="searchInput">
+    </div>
+    <div class="sidebar-content" id="topicList">
+      <div class="topic-item active" data-topic="intro">
+        <span class="topic-icon">&#128640;</span>Introducción
+      </div>
+      <div class="topic-item" data-topic="facturacion">
+        <span class="topic-icon">&#128179;</span>Facturación
+      </div>
+      <div class="topic-item" data-topic="inventario">
+        <span class="topic-icon">&#128230;</span>Inventario
+      </div>
+      <div class="topic-item" data-topic="reportes">
+        <span class="topic-icon">&#128202;</span>Reportes
+      </div>
+      <div class="topic-item" data-topic="parametros">
+        <span class="topic-icon">&#9881;</span>Parámetros
+      </div>
+      <div class="topic-item" data-topic="usuarios">
+        <span class="topic-icon">&#128101;</span>Usuarios y Roles
+      </div>
+    </div>
+  </aside>
+
+  <main class="content-area">
+    <div class="content-header">
+      <div class="content-nav">
+        <button class="btn" id="prevBtn">&#8592; Anterior</button>
+        <button class="btn" id="nextBtn">Siguiente &#8594;</button>
+      </div>
+      <div class="content-nav">
+        <button class="btn" onclick="window.print()">Imprimir</button>
+      </div>
+    </div>
+    <div class="content-body">
+      <h2 class="article-title" id="articleTitle">Introducción</h2>
+      <div class="article-meta" id="articleMeta">Última actualización: Octubre 2026 &middot; 3 min lectura</div>
+      <div class="article-body" id="articleBody">
+        <h3>Bienvenido a Monica-23</h3>
+        <p>Monica-23 es un sistema integral de gestión empresarial diseñado para administrar facturación, inventario, reportes y configuración de usuarios en un único entorno de trabajo.</p>
+        <div class="callout callout-info">
+          <strong>Consejo:</strong> Use el índice lateral para navegar por los diferentes temas del manual. La búsqueda le permite encontrar rápidamente cualquier sección.
+        </div>
+        <h3>Requisitos del Sistema</h3>
+        <ul>
+          <li>Windows 10 o superior</li>
+          <li>4 GB de RAM mínimo (8 GB recomendado)</li>
+          <li>Conexión a internet para actualizaciones</li>
+        </ul>
+        <h3>Estructura del Manual</h3>
+        <p>Este manual está organizado en seis secciones principales que cubren todas las funcionalidades del sistema. Cada sección incluye instrucciones paso a paso y capturas de pantalla de referencia.</p>
+        <div class="callout callout-warn">
+          <strong>Importante:</strong> Algunos módulos requieren permisos de administrador. Consulte con el administrador del sistema si no tiene acceso a ciertas funciones.
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="shortcut-hint">Presiona <kbd>Esc</kbd> para salir</div>
+
+<script>
+  const topics = {
+    intro: {
+      title: 'Introducción',
+      meta: 'Última actualización: Octubre 2026 · 3 min lectura',
+      body: `
+        <h3>Bienvenido a Monica-23</h3>
+        <p>Monica-23 es un sistema integral de gestión empresarial diseñado para administrar facturación, inventario, reportes y configuración de usuarios en un único entorno de trabajo.</p>
+        <div class="callout callout-info"><strong>Consejo:</strong> Use el índice lateral para navegar por los diferentes temas del manual.</div>
+        <h3>Requisitos del Sistema</h3>
+        <ul><li>Windows 10 o superior</li><li>4 GB de RAM mínimo (8 GB recomendado)</li><li>Conexión a internet para actualizaciones</li></ul>
+        <h3>Estructura del Manual</h3>
+        <p>Este manual está organizado en seis secciones principales que cubren todas las funcionalidades del sistema.</p>
+        <div class="callout callout-warn"><strong>Importante:</strong> Algunos módulos requieren permisos de administrador.</div>
+      `
+    },
+    facturacion: {
+      title: 'Facturación',
+      meta: 'Última actualización: Octubre 2026 · 5 min lectura',
+      body: `
+        <h3>Crear una Factura</h3>
+        <p>Para crear una nueva factura, acceda al módulo de Facturación desde el menú principal. Seleccione "Nueva Factura" y complete los datos del cliente, los productos o servicios, y las condiciones de pago.</p>
+        <h3>Estados de Factura</h3>
+        <ul><li><strong>Borrador:</strong> Factura en edición, aún no emitida</li><li><strong>Emitida:</strong> Factura válida y contabilizada</li><li><strong>Pagada:</strong> Factura con pago registrado</li><li><strong>Anulada:</strong> Factura cancelada (requiere justificación)</li></ul>
+        <div class="callout callout-info"><strong>Nota:</strong> Las facturas emitidas no pueden editarse. Debe anularlas y crear una nueva si es necesario.</div>
+      `
+    },
+    inventario: {
+      title: 'Inventario',
+      meta: 'Última actualización: Octubre 2026 · 4 min lectura',
+      body: `
+        <h3>Gestión de Productos</h3>
+        <p>El módulo de inventario permite administrar el catálogo de productos, existencias, precios y categorías. Puede importar productos masivamente desde archivos CSV.</p>
+        <h3>Control de Stock</h3>
+        <p>Configure alertas de stock mínimo para recibir notificaciones cuando las existencias alcancen niveles críticos.</p>
+        <div class="callout callout-warn"><strong>Atención:</strong> Las eliminaciones de productos son permanentes. Verifique antes de proceder.</div>
+      `
+    },
+    reportes: {
+      title: 'Reportes',
+      meta: 'Última actualización: Octubre 2026 · 6 min lectura',
+      body: `
+        <h3>Reportes Disponibles</h3>
+        <p>El sistema incluye reportes de ventas, compras, inventario, cartera y resultados financieros. Todos pueden exportarse a PDF o Excel.</p>
+        <h3>Programar Reportes</h3>
+        <p>Configure reportes automáticos para ser enviados por correo electrónico en la frecuencia deseada (diaria, semanal, mensual).</p>
+        <div class="callout callout-info"><strong>Sugerencia:</strong> Los reportes personalizados se guardan en "Mis reportes" para acceso rápido.</div>
+      `
+    },
+    parametros: {
+      title: 'Parámetros',
+      meta: 'Última actualización: Octubre 2026 · 4 min lectura',
+      body: `
+        <h3>Configuración General</h3>
+        <p>El módulo de parámetros permite personalizar el sistema según las necesidades de la empresa: datos de la empresa, moneda, impuestos, formatos de impresión y más.</p>
+        <h3>Accesos y Seguridad</h3>
+        <p>Configure roles de usuario, permisos por módulo y políticas de contraseñas para mantener la seguridad de la información.</p>
+        <div class="callout callout-warn"><strong>Importante:</strong> Los cambios en parámetros pueden afectar el funcionamiento del sistema. Documente cualquier modificación.</div>
+      `
+    },
+    usuarios: {
+      title: 'Usuarios y Roles',
+      meta: 'Última actualización: Octubre 2026 · 3 min lectura',
+      body: `
+        <h3>Crear Usuarios</h3>
+        <p>Desde el módulo de parámetros puede crear nuevos usuarios asignando un rol predefinido o personalizando permisos individuales por módulo.</p>
+        <h3>Roles Predefinidos</h3>
+        <ul><li><strong>Administrador:</strong> Acceso total al sistema</li><li><strong>Vendedor:</strong> Facturación y consulta de inventario</li><li><strong>Contador:</strong> Reportes y facturación</li><li><strong>Solo lectura:</strong> Consulta sin capacidad de modificación</li></ul>
+        <div class="callout callout-info"><strong>Recomendación:</strong> Asigne siempre el rol mínimo necesario para cada usuario.</div>
+      `
+    }
+  };
+
+  const topicList = document.getElementById('topicList');
+  const articleTitle = document.getElementById('articleTitle');
+  const articleMeta = document.getElementById('articleMeta');
+  const articleBody = document.getElementById('articleBody');
+  const searchInput = document.getElementById('searchInput');
+  let currentTopic = 'intro';
+
+  function loadTopic(topicId) {
+    const topic = topics[topicId];
+    if (!topic) return;
+    currentTopic = topicId;
+    articleTitle.textContent = topic.title;
+    articleMeta.textContent = topic.meta;
+    articleBody.innerHTML = topic.body;
+    document.querySelectorAll('.topic-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.topic === topicId);
+    });
+  }
+
+  topicList.addEventListener('click', (e) => {
+    const item = e.target.closest('.topic-item');
+    if (item) loadTopic(item.dataset.topic);
+  });
+
+  searchInput.addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll('.topic-item').forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = text.includes(q) ? 'block' : 'none';
+    });
+  });
+
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    const keys = Object.keys(topics);
+    const idx = keys.indexOf(currentTopic);
+    if (idx > 0) loadTopic(keys[idx - 1]);
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    const keys = Object.keys(topics);
+    const idx = keys.indexOf(currentTopic);
+    if (idx < keys.length - 1) loadTopic(keys[idx + 1]);
+  });
+
+  document.querySelectorAll('.sidebar-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      window.close();
+    }
+    if (e.altKey && e.key === 'ArrowLeft') {
+      const keys = Object.keys(topics);
+      const idx = keys.indexOf(currentTopic);
+      if (idx > 0) loadTopic(keys[idx - 1]);
+    }
+    if (e.altKey && e.key === 'ArrowRight') {
+      const keys = Object.keys(topics);
+      const idx = keys.indexOf(currentTopic);
+      if (idx < keys.length - 1) loadTopic(keys[idx + 1]);
+    }
+  });
+
+  loadTopic('intro');
+</script>
+
+</body>
+</html>

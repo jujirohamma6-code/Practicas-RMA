@@ -1,5 +1,22 @@
 {
 <<<<<<< HEAD
+  "name": "monica9-parametros",
+  "version": "1.0.0",
+  "description": "Prototipo Electron de los módulos Parámetros y Manual de MÓNICA 9",
+  "main": "main.js",
+  "author": "Tirsa",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "start:debug": "electron . --enable-logging"
+  },
+  "dependencies": {
+    "sql.js": "^1.11.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+=======
+<<<<<<< HEAD
   "name": "cornavex",
   "productName": "Cornavex",
   "version": "1.0.0",
@@ -34,5 +51,6 @@
 >>>>>>> de00e8b68926afd0512a38966b4b4596ea12292f
   "dependencies": {
     "sqlite3": "^6.0.1"
+>>>>>>> e075c6cc744bc1199a369dc263fe9e0ce334e795
   }
 }
