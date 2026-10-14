@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Módulo de Facturación</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="monica-container">
+    <header class="monica-header">
+      <h2>INDUSTRIAS S.A. - FACTURACIÓN DE VENTAS</h2>
+      <div class="info-sistema">
+        <span>Módulo de Eliab</span>
+      </div>
+    </header>
+
+    <main class="modulos-grid-wrapper">
+      <div class="titulo-ventana">NUEVA FACTURA DE VENTA</div>
+
+      <form id="form-factura" style="margin-bottom: 20px;">
+        <!-- ENCABEZADO DE LA FACTURA -->
+        <div style="display: flex; gap: 15px; margin-bottom: 15px; text-align: left;">
+          <div style="flex: 1;">
+            <label><strong>Cliente:</strong></label>
+            <input type="text" id="factura-cliente" required placeholder="Nombre del cliente" style="width: 100%; padding: 8px;">
+          </div>
+          <div style="flex: 1;">
+            <label><strong>Fecha:</strong></label>
+            <input type="date" id="factura-fecha" required style="width: 100%; padding: 8px;">
+          </div>
+        </div>
+
+        <!-- ENTRADA DE ÍTEMS PARA AGREGAR A LA LISTA -->
+        <div style="background: #eef2f7; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 15px; text-align: left;">
+          <strong style="color: #1a365d; display: block; margin-bottom: 8px;">Añadir Ítem / Producto a la Factura:</strong>
+          <div style="display: flex; gap: 10px; align-items: flex-end;">
+            <div style="flex: 2;">
+              <label style="font-size: 12px;">Descripción:</label>
+              <input type="text" id="item-desc" placeholder="Ej. Bolsa de cemento" style="width: 100%; padding: 6px;">
+            </div>
+            <div style="width: 80px;">
+              <label style="font-size: 12px;">Cant.:</label>
+              <input type="number" id="item-cant" value="1" min="1" style="width: 100%; padding: 6px;">
+            </div>
+            <div style="width: 110px;">
+              <label style="font-size: 12px;">Precio Unit.:</label>
+              <input type="number" step="0.01" id="item-precio" placeholder="0.00" style="width: 100%; padding: 6px;">
+            </div>
+            <button type="button" onclick="agregarItemALista()" style="background: #28a745; color: white; border: none; padding: 8px 14px; font-weight: bold; cursor: pointer;">
+              ➕ Agregar Ítem
+            </button>
+          </div>
+        </div>
+
+        <!-- TABLA DE ÍTEMS DE LA FACTURA EN PROCESO -->
+        <table style="width: 100%; border-collapse: collapse; background: white; margin-bottom: 15px; color: black;">
+          <thead>
+            <tr style="background: #2a5298; color: white;">
+              <th style="padding: 8px; border: 1px solid #ccc;">Ítem / Servicio</th>
+              <th style="padding: 8px; border: 1px solid #ccc; width: 80px;">Cant.</th>
+              <th style="padding: 8px; border: 1px solid #ccc; width: 100px;">Precio Unit.</th>
+              <th style="padding: 8px; border: 1px solid #ccc; width: 100px;">Subtotal</th>
+              <th style="padding: 8px; border: 1px solid #ccc; width: 60px;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-items-factura">
+            <!-- Ítems agregados temporalmente -->
+          </tbody>
+          <tfoot>
+            <tr style="background: #f1f5f9; font-weight: bold;">
+              <td colspan="3" style="padding: 8px; text-align: right; border: 1px solid #ccc;">TOTAL FACTURA:</td>
+              <td id="total-factura-temporal" style="padding: 8px; text-align: right; border: 1px solid #ccc; color: #1a365d;">$0.00</td>
+              <td style="border: 1px solid #ccc;"></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- BOTONES DE ACCIÓN -->
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button type="submit" class="btn-modulo active-modulo" style="padding: 10px 20px;">
+            📄 Guardar Factura Completa
+          </button>
+          <button type="button" class="btn-modulo salir" onclick="window.location.href='index.html'" style="padding: 10px 20px;">
+            ⬅️ Volver al Menú
+          </button>
+        </div>
+      </form>
+
+      <!-- HISTORIAL DE FACTURAS REGISTRADAS -->
+      <div class="titulo-ventana" style="margin-top: 20px;">HISTORIAL DE FACTURAS</div>
+      <table style="width: 100%; border-collapse: collapse; background: white; color: black; margin-bottom: 15px;">
+        <thead>
+          <tr style="background: #1a365d; color: white;">
+            <th style="padding: 8px; border: 1px solid #ccc;">ID</th>
+            <th style="padding: 8px; border: 1px solid #ccc;">Cliente</th>
+            <th style="padding: 8px; border: 1px solid #ccc;">Fecha</th>
+            <th style="padding: 8px; border: 1px solid #ccc;">Detalle / Ítems</th>
+            <th style="padding: 8px; border: 1px solid #ccc;">Total General</th>
+            <th style="padding: 8px; border: 1px solid #ccc;">Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-facturas">
+          <!-- Historial guardado -->
+        </tbody>
+      </table>
+
+      <div class="status-bar">
+        <span id="factura-status">Listo para registrar factura</span>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let itemsFactura = [];
+
+    function agregarItemALista() {
+      const desc = document.getElementById('item-desc').value.trim();
+      const cant = parseInt(document.getElementById('item-cant').value);
+      const precio = parseFloat(document.getElementById('item-precio').value);
+
+      if (!desc || isNaN(cant) || isNaN(precio) || cant <= 0 || precio <= 0) {
+        alert('Por favor ingresa una descripción, cantidad y precio válidos.');
+        return;
+      }
+
+      itemsFactura.push({
+        descripcion: desc,
+        cantidad: cant,
+        precio: precio,
+        subtotal: cant * precio
+      });
+
+      // Limpiar campos del ítem
+      document.getElementById('item-desc').value = '';
+      document.getElementById('item-cant').value = '1';
+      document.getElementById('item-precio').value = '';
+
+      renderizarItemsTemporales();
+    }
+
+    function eliminarItemTemporal(index) {
+      itemsFactura.splice(index, 1);
+      renderizarItemsTemporales();
+    }
+
+    function renderizarItemsTemporales() {
+      const tbody = document.getElementById('tabla-items-factura');
+      tbody.innerHTML = '';
+      let total = 0;
+
+      itemsFactura.forEach((item, index) => {
+        total += item.subtotal;
+        tbody.innerHTML += `
+          <tr>
+            <td style="padding: 6px; border: 1px solid #ccc;">${item.descripcion}</td>
+            <td style="padding: 6px; border: 1px solid #ccc; text-align: center;">${item.cantidad}</td>
+            <td style="padding: 6px; border: 1px solid #ccc; text-align: right;">$${item.precio.toFixed(2)}</td>
+            <td style="padding: 6px; border: 1px solid #ccc; text-align: right;">$${item.subtotal.toFixed(2)}</td>
+            <td style="padding: 6px; border: 1px solid #ccc; text-align: center;">
+              <button type="button" onclick="eliminarItemTemporal(${index})" style="background:#cc0000; color:white; border:none; padding:2px 6px; cursor:pointer;">❌</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('total-factura-temporal').innerText = `$${total.toFixed(2)}`;
+    }
+
+    async function cargarFacturas() {
+      if (!window.api || !window.api.obtenerFacturas) return;
+      const datos = await window.api.obtenerFacturas();
+      const tbody = document.getElementById('tabla-facturas');
+      tbody.innerHTML = '';
+      datos.forEach(f => {
+        tbody.innerHTML += `
+          <tr>
+            <td style="padding: 6px; border: 1px solid #ccc; text-align: center;">${f.id}</td>
+            <td style="padding: 6px; border: 1px solid #ccc;">${f.cliente}</td>
+            <td style="padding: 6px; border: 1px solid #ccc; text-align: center;">${f.fecha}</td>
+            <td style="padding: 6px; border: 1px solid #ccc;">${f.item}</td>
+            <td style="padding: 6px; border: 1px solid #ccc; text-align: right; font-weight: bold;">$${Number(f.total).toFixed(2)}</td>
+            <td style="padding: 6px; border: 1px solid #ccc; text-align: center;">
+              <button type="button" onclick="eliminarFactura(${f.id})" style="background:#cc0000; color:white; border:none; padding:4px 8px; cursor:pointer;">❌</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    document.getElementById('form-factura').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (itemsFactura.length === 0) {
+        alert('Debes agregar al menos un ítem a la factura antes de guardarla.');
+        return;
+      }
+
+      const cliente = document.getElementById('factura-cliente').value;
+      const fecha = document.getElementById('factura-fecha').value;
+      
+      // Resumen de ítems en texto
+      const detalleItems = itemsFactura.map(i => `${i.cantidad}x ${i.descripcion} ($${i.subtotal.toFixed(2)})`).join(' | ');
+      const totalGeneral = itemsFactura.reduce((sum, i) => sum + i.subtotal, 0);
+
+      const datos = {
+        cliente: cliente,
+        fecha: fecha,
+        item: detalleItems,
+        cantidad: 1,
+        precio: totalGeneral
+      };
+
+      if (window.api && window.api.guardarFactura) {
+        const res = await window.api.guardarFactura(datos);
+        if (res.success) {
+          document.getElementById('factura-status').innerText = `✅ Factura #${res.id} guardada con ${itemsFactura.length} productos por $${totalGeneral.toFixed(2)}.`;
+          document.getElementById('form-factura').reset();
+          itemsFactura = [];
+          renderizarItemsTemporales();
+          cargarFacturas();
+        } else {
+          document.getElementById('factura-status').innerText = `❌ Error: ${res.error}`;
+        }
+      }
+    });
+
+    async function eliminarFactura(id) {
+      if (confirm('¿Deseas eliminar esta factura?')) {
+        await window.api.eliminarFactura(id);
+        cargarFacturas();
+      }
+    }
+
+    window.onload = cargarFacturas;
+  </script>
+</body>
+</html>

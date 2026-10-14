@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "cornavex",
   "productName": "Cornavex",
   "version": "1.0.0",
@@ -18,6 +19,19 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+=======
+  "name": "practicas-rma-monica",
+  "version": "0.1.0",
+  "description": "MVP Sistema Contable Electron",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^4.2.1",
+    "electron": "^32.0.0"
+  },
+>>>>>>> de00e8b68926afd0512a38966b4b4596ea12292f
   "dependencies": {
     "sqlite3": "^6.0.1"
   }

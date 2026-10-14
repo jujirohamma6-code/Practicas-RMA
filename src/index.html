@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 ﻿<!DOCTYPE html>
+=======
+<!DOCTYPE html>
+>>>>>>> de00e8b68926afd0512a38966b4b4596ea12292f
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
   <title>Cornavex Â· Sistema Contable</title>
   <link rel="stylesheet" href="../assets/style.css">
 </head>
@@ -538,3 +543,46 @@
   <script src="modules/app.js"></script>
 </body>
 </html>
+=======
+  <title>Sistema Contable - Mónica MVP</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="monica-container">
+    <header class="monica-header">
+      <h2>INDUSTRIAS S.A.</h2>
+      <div class="info-sistema">
+        <span id="fecha-actual">13/10/2026</span>
+      </div>
+    </header>
+
+    <main class="modulos-grid-wrapper">
+      <div class="titulo-ventana">MODULOS DE ELIAB</div>
+
+      <!-- GRID DE 3 MÓDULOS + SALIR -->
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0;">
+        <button class="btn-modulo active-modulo" onclick="abrirModulo('facturacion')">
+          📄 Facturación
+        </button>
+        <button class="btn-modulo active-modulo" onclick="abrirModulo('cxp')">
+          📁 Cuentas por Pagar
+        </button>
+        <button class="btn-modulo active-modulo" onclick="abrirModulo('estimados')">
+          📊 Estimados
+        </button>
+        <button class="btn-modulo salir" onclick="window.close()">
+          🚪 Salir
+        </button>
+      </div>
+
+      <div class="status-bar">
+        <span id="test-db-msg">Estado SQLite: Cargando...</span>
+      </div>
+    </main>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
+>>>>>>> de00e8b68926afd0512a38966b4b4596ea12292f
