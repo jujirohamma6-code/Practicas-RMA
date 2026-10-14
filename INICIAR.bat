@@ -12,5 +12,5 @@ if not exist "node_modules\electron\dist\electron.exe" (
   exit /b 1
 )
 
-echo Iniciando Monica Gestion...
+echo Iniciando Cornavex...
 start "" "node_modules\electron\dist\electron.exe" .

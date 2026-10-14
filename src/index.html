@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mónica Gestión · Sistema Contable</title>
+  <title>Cornavex · Sistema Contable</title>
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -14,9 +14,9 @@
     <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
 
       <div class="brand">
-        <div class="brand__logo">MG</div>
+        <div class="brand__logo">CV</div>
         <div class="brand__text">
-          <strong>Mónica Gestión</strong>
+          <strong>Cornavex</strong>
           <span>Sistema Contable</span>
         </div>
       </div>
@@ -361,9 +361,28 @@
     </div>
   </div>
 
+  <!-- Modal de confirmación reutilizable (lo controla modules/ui.js) -->
+  <dialog class="modal" id="modalConfirm" aria-labelledby="modalConfirmTitulo">
+    <div class="modal__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>
+        <path d="M12 9v4"/><path d="M12 17h.01"/>
+      </svg>
+    </div>
+    <h3 class="modal__title" id="modalConfirmTitulo" data-modal-title>Confirmar acción</h3>
+    <p class="modal__text" data-modal-text></p>
+    <p class="modal__detail" data-modal-detail hidden></p>
+    <div class="modal__actions">
+      <button class="btn btn--ghost" type="button" data-modal-cancelar>Cancelar</button>
+      <button class="btn btn--danger" type="button" data-modal-confirmar>Confirmar</button>
+    </div>
+  </dialog>
+
   <!-- Notificaciones -->
   <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
 
+  <!-- Kit de UI (toasts, modal y validación) + lógica de la aplicación -->
+  <script src="../modules/ui.js"></script>
   <script src="../modules/app.js"></script>
 </body>
 </html>

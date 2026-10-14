@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MÓNICA GESTIÓN · HOJA DE ESTILOS
+   CORNAVEX · HOJA DE ESTILOS
    Bloque 1 · Interfaz de usuario
    --------------------------------------------------------------------------
    ÍNDICE
@@ -24,14 +24,14 @@
    01. VARIABLES Y TEMA
    ========================================================================== */
 :root {
-  /* Marca */
-  --brand-900: #0b1425;
-  --brand-800: #12213c;
+  /* Marca · Cornavex (navy + teal) */
+  --brand-900: #071a33;
+  --brand-800: #0f2540;
   --brand-700: #1e4f7c;
   --brand-600: #2f6ea8;
   --brand-500: #3f86c7;
-  --accent-600: #701a75;
-  --accent-500: #9333a8;
+  --accent-600: #0f766e;
+  --accent-500: #14b8a6;
 
   /* Superficies */
   --bg-app: #eef2f8;
@@ -181,21 +181,25 @@ svg {
   transition: transform var(--t-base), opacity var(--t-base);
 }
 
+/* Encabezado de marca: logo rígido + texto que se adapta sin desbordar */
 .brand {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;                /* permite que la fila encoja dentro del panel */
+  overflow: hidden;            /* nada de la marca se sale del sidebar */
   padding: var(--space-2) var(--space-2) var(--space-4);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .brand__logo {
+  flex: 0 0 44px;              /* el logo NUNCA se comprime ni crece */
   width: 44px;
   height: 44px;
   display: grid;
   place-items: center;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--accent-500), var(--brand-500));
+  background: linear-gradient(135deg, var(--accent-600), var(--brand-600));
   font-weight: 800;
   letter-spacing: 0.5px;
   color: #fff;
@@ -203,14 +207,28 @@ svg {
 }
 
 .brand__text {
+  flex: 1 1 auto;
+  min-width: 0;                /* clave: sin esto el texto empuja y aplasta el logo */
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   line-height: 1.25;
+}
+
+/* Nombre y subtítulo recortan con "…" en lugar de desbordarse o amontonarse */
+.brand__text strong,
+.brand__text span {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .brand__text strong {
   color: #fff;
   font-size: var(--fs-lg);
+  letter-spacing: -0.01em;
 }
 
 .brand__text span {
@@ -256,9 +274,9 @@ svg {
 }
 
 .nav-item.is-active {
-  background: linear-gradient(90deg, rgba(47, 110, 168, 0.55), rgba(112, 26, 117, 0.35));
+  background: linear-gradient(90deg, rgba(47, 110, 168, 0.55), rgba(15, 118, 110, 0.4));
   color: #fff;
-  box-shadow: inset 3px 0 0 var(--brand-500);
+  box-shadow: inset 3px 0 0 var(--accent-500);
 }
 
 .nav-item__icon {
@@ -458,6 +476,17 @@ svg {
   color: var(--brand-700);
 }
 
+.btn--danger {
+  background: var(--danger);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--danger:hover {
+  background: #a92424;
+  box-shadow: var(--shadow-md);
+}
+
 .icon-btn {
   display: inline-grid;
   place-items: center;
@@ -640,10 +669,6 @@ svg {
   background: var(--bg-surface);
   border-color: var(--brand-500);
   box-shadow: 0 0 0 3px rgba(63, 134, 199, 0.18);
-}
-
-.field input:invalid:not(:placeholder-shown) {
-  border-color: var(--danger);
 }
 
 .form__actions {
@@ -995,4 +1020,143 @@ svg {
     right: 16px;
     max-width: none;
   }
+}
+
+/* ==========================================================================
+   16. VALIDACIÓN DE FORMULARIOS (Bloque 3)
+   El formulario agrega la clase .is-invalid al contenedor .field cuando el
+   campo tiene un error, y crea un .field__error con el motivo.
+   ========================================================================== */
+.field.is-invalid input,
+.field.is-invalid select,
+.field.is-invalid textarea {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  box-shadow: 0 0 0 3px rgba(192, 43, 43, 0.14);
+  animation: campo-invalido 0.2s ease-in-out;
+}
+
+.field.is-invalid label {
+  color: var(--danger);
+}
+
+.field__error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.field__error svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+@keyframes campo-invalido {
+  0%   { transform: translateX(0); }
+  30%  { transform: translateX(-4px); }
+  60%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+/* ==========================================================================
+   17. MODAL DE CONFIRMACIÓN (Bloque 3)
+   ========================================================================== */
+.modal {
+  width: min(430px, calc(100vw - 32px));
+  padding: var(--space-5);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  color: var(--text-base);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal::backdrop {
+  background: rgba(11, 20, 37, 0.55);
+}
+
+.modal[open] {
+  animation: modal-in var(--t-base) both;
+}
+
+.modal__icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: var(--space-3);
+  border-radius: 50%;
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.modal__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.modal__title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.modal__text {
+  margin-top: var(--space-2);
+  font-size: var(--fs-md);
+  color: var(--text-base);
+}
+
+.modal__detail {
+  margin-top: var(--space-3);
+  padding: 10px 12px;
+  border-left: 3px solid var(--brand-500);
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ==========================================================================
+   18. TOAST: CIERRE MANUAL (Bloque 3)
+   ========================================================================== */
+.toast__close {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: transparent;
+  flex: none;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.toast__close:hover {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.toast__close svg {
+  width: 12px;
+  height: 12px;
 }
