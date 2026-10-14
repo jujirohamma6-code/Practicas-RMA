@@ -9,7 +9,7 @@
      05. Navegación entre módulos
      06. Render de estadísticas, tablas y acciones
      07. Formularios (abrir / validar / guardar / cancelar)
-     08. Notificaciones (toasts)
+     08. Notificaciones (toasts) — implementadas en modules/ui.js
      09. Inicialización y eventos globales
    ========================================================================== */
 'use strict';
@@ -34,6 +34,11 @@ const MODULOS = {
       { key: 'dcmto', label: 'Dcmto.' },
       { key: 'cuenta', label: 'Cuenta' },
       { key: 'descripcion', label: 'Descripción / Nombre' }
+    ],
+    // Reglas de validación del formulario (las aplica modules/ui.js)
+    validaciones: [
+      { campo: 'nro_asiento', requerido: true, minLongitud: 2, mensaje: 'El nro. de asiento no puede estar vacío (mínimo 2 caracteres).' },
+      { campo: 'fecha', requerido: true, mensaje: 'La fecha es obligatoria.' }
     ],
     stats: (rows) => {
       const cuentas = new Set(rows.map((r) => r.cuenta).filter(Boolean));
@@ -60,6 +65,12 @@ const MODULOS = {
       { key: 'monto', label: 'Monto', align: 'num', render: (r) => formatearMonto(r.monto) },
       { key: 'estado', label: 'Estado', render: (r) => badgeEstadoChequera(r.estado) }
     ],
+    // Reglas de validación del formulario (las aplica modules/ui.js)
+    validaciones: [
+      { campo: 'nro_cheque', requerido: true, minLongitud: 2, mensaje: 'El nro. de cheque/documento no puede estar vacío (mínimo 2 caracteres).' },
+      { campo: 'fecha', requerido: true, mensaje: 'La fecha es obligatoria.' },
+      { campo: 'monto', requerido: true, noNegativo: true, mensaje: 'El monto debe ser un número igual o mayor que 0.' }
+    ],
     stats: (rows) => {
       const total = rows.reduce((acc, r) => acc + (Number(String(r.monto).replace(/[^0-9.-]/g, '')) || 0), 0);
       const pendientes = rows.filter((r) => /pendiente|emitido/i.test(r.estado || '')).length;
@@ -84,6 +95,11 @@ const MODULOS = {
       { key: 'tipo', label: 'Tipo', render: (r) => badge(r.tipo || '—', r.tipo === 'Proveedor' ? 'badge--warning' : 'badge--info') },
       { key: 'telefono', label: 'Teléfono' },
       { key: 'estado', label: 'Estado', render: (r) => badgeEstadoContacto(r.estado) }
+    ],
+    // Reglas de validación del formulario (las aplica modules/ui.js)
+    validaciones: [
+      { campo: 'codigo', requerido: true, minLongitud: 3, mensaje: 'El código no puede estar vacío (mínimo 3 caracteres).' },
+      { campo: 'nombre_razon', requerido: true, minLongitud: 3, mensaje: 'El nombre / razón social es obligatorio (mínimo 3 caracteres).' }
     ],
     stats: (rows) => {
       const clientes = rows.filter((r) => /cliente/i.test(r.tipo || '')).length;
@@ -113,6 +129,26 @@ function esc(valor) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/** Normaliza texto para comparar/buscar sin acentos y sin mayúsculas. */
+function norm(valor) {
+  return String(valor ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/** Capitaliza la primera letra de un texto. */
+function capitalizar(texto) {
+  const s = String(texto || '');
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** Etiqueta legible de un registro (para mensajes y confirmaciones). */
+function etiquetaRegistro(registro = {}) {
+  return registro.nro_asiento || registro.nro_cheque || registro.codigo || registro.nombre_razon || 'sin identificar';
 }
 
 /** Fecha de hoy en formato YYYY-MM-DD (zona local). */
@@ -411,10 +447,16 @@ function renderStats(modulo) {
 
 /** Devuelve los registros filtrados según la búsqueda activa del módulo. */
 function filasVisibles(modulo) {
-  const q = estado.filtros[modulo].trim().toLowerCase();
+  const q = norm(estado.filtros[modulo]);
   const filas = estado[modulo];
   if (!q) return filas;
-  return filas.filter((r) => Object.values(r).some((v) => String(v ?? '').toLowerCase().includes(q)));
+
+  // Búsqueda por múltiples términos ("pulperia prov" encuentra ambos)
+  const terminos = q.split(/\s+/);
+  return filas.filter((r) => {
+    const texto = norm(Object.values(r).join(' '));
+    return terminos.every((t) => texto.includes(t));
+  });
 }
 
 function renderTabla(modulo) {
@@ -425,7 +467,10 @@ function renderTabla(modulo) {
   const filas = filasVisibles(modulo);
   const contador = $(`[data-count="${modulo}"]`);
   if (contador) {
-    contador.textContent = filas.length === 1 ? '1 registro' : `${filas.length} registros`;
+    // Con filtro activo se muestra "X registros de Y"
+    const hayFiltro = norm(estado.filtros[modulo]) !== '';
+    const etiqueta = filas.length === 1 ? '1 registro' : `${filas.length} registros`;
+    contador.textContent = hayFiltro ? `${etiqueta} de ${estado[modulo].length}` : etiqueta;
   }
 
   if (filas.length === 0) {
@@ -490,6 +535,7 @@ function abrirFormulario(modulo, registro = null) {
 
   form.reset();
   form.elements.id.value = registro ? registro.id : '';
+  UI.limpiarErrores(form); // el formulario se abre siempre limpio
 
   if (registro) {
     Object.entries(registro).forEach(([clave, valor]) => {
@@ -518,14 +564,22 @@ function cerrarFormulario(modulo) {
   if (form) {
     form.reset();
     form.elements.id.value = '';
+    UI.limpiarErrores(form);
   }
 }
 
 async function guardarFormulario(modulo, form) {
-  // Validación nativa de campos obligatorios
-  if (!form.checkValidity()) {
-    form.reportValidity();
-    toast('Completa los campos obligatorios antes de guardar.', 'warning');
+  const cfg = MODULOS[modulo];
+
+  // Validación visual: obligatorios vacíos, códigos y montos (ver modules/ui.js)
+  const validacion = UI.validarFormulario(form, cfg.validaciones);
+  if (!validacion.ok) {
+    toast(
+      validacion.total === 1
+        ? 'Corrige el campo marcado en rojo antes de guardar.'
+        : `Corrige los ${validacion.total} campos marcados en rojo antes de guardar.`,
+      'warning'
+    );
     return;
   }
 
@@ -538,6 +592,9 @@ async function guardarFormulario(modulo, form) {
     datos.monto = Number(datos.monto).toFixed(2);
   }
 
+  const nombre = etiquetaRegistro(datos);
+  const entidad = capitalizar(cfg.singular);
+
   if (id) {
     // Edición: UPDATE real en SQLite
     const res = await DataService.actualizar(modulo, id, datos);
@@ -545,7 +602,7 @@ async function guardarFormulario(modulo, form) {
       toast('No se pudo actualizar: ' + (res && res.error ? res.error : 'error desconocido'), 'danger');
       return;
     }
-    toast('Registro actualizado correctamente.', 'success');
+    toast(`${entidad} «${nombre}» actualizado con éxito.`, 'success');
   } else {
     // Alta: INSERT real en SQLite
     const res = await DataService.crear(modulo, datos);
@@ -553,7 +610,7 @@ async function guardarFormulario(modulo, form) {
       toast('No se pudo guardar: ' + (res && res.error ? res.error : 'error desconocido'), 'danger');
       return;
     }
-    toast('Registro guardado correctamente.', 'success');
+    toast(`${entidad} «${nombre}» guardado con éxito.`, 'success');
   }
 
   cerrarFormulario(modulo);
@@ -567,13 +624,19 @@ function editarRegistro(modulo, id) {
 }
 
 async function eliminarRegistro(modulo, id) {
+  const cfg = MODULOS[modulo];
   const registro = estado[modulo].find((r) => String(r.id) === String(id));
-  const etiqueta = registro
-    ? (registro.nro_asiento || registro.nro_cheque || registro.codigo || registro.nombre_razon || '')
-    : '';
+  if (!registro) return;
 
-  const ok = window.confirm(`¿Eliminar ${MODULOS[modulo].singular} "${etiqueta}"?\nEsta acción no se puede deshacer.`);
-  if (!ok) return;
+  // Modal de confirmación (reemplaza al confirm() nativo del navegador)
+  const confirmado = await UI.confirmar({
+    titulo: `Eliminar ${cfg.singular}`,
+    mensaje: '¿Estás seguro de que deseas eliminar este registro?',
+    detalle: `${capitalizar(cfg.singular)}: ${etiquetaRegistro(registro)}`,
+    textoConfirmar: 'Sí, eliminar',
+    textoCancelar: 'Cancelar'
+  });
+  if (!confirmado) return;
 
   // DELETE real en SQLite
   const res = await DataService.eliminar(modulo, id);
@@ -582,42 +645,16 @@ async function eliminarRegistro(modulo, id) {
     return;
   }
 
-  toast('Registro eliminado.', 'success');
+  toast(`${capitalizar(cfg.singular)} «${etiquetaRegistro(registro)}» eliminado con éxito.`, 'success');
   // Se relee desde la base de datos para confirmar el borrado.
   await cargarModulo(modulo, true);
 }
 
 /* ==========================================================================
    08. NOTIFICACIONES (TOASTS)
+   El componente vive en `modules/ui.js` (kit de UI reutilizable) y se usa
+   desde aquí a través de la función global `toast(mensaje, tipo)`.
    ========================================================================== */
-const ICONOS_TOAST = {
-  success: '<path d="M20 6L9 17l-5-5"/>',
-  warning: '<path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/>',
-  danger: '<path d="M18 6L6 18M6 6l12 12"/>',
-  info: '<path d="M12 16v-5"/><path d="M12 8h.01"/><circle cx="12" cy="12" r="9"/>'
-};
-
-function toast(mensaje, tipo = 'info') {
-  const stack = $('#toastStack');
-  if (!stack) return;
-
-  const el = document.createElement('div');
-  el.className = `toast toast--${tipo}`;
-  el.innerHTML = `
-    <span class="toast__icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        ${ICONOS_TOAST[tipo] || ICONOS_TOAST.info}
-      </svg>
-    </span>
-    <span class="toast__msg">${esc(mensaje)}</span>`;
-
-  stack.appendChild(el);
-
-  setTimeout(() => {
-    el.classList.add('is-out');
-    setTimeout(() => el.remove(), 300);
-  }, 3200);
-}
 
 /* ==========================================================================
    09. INICIALIZACIÓN Y EVENTOS GLOBALES
@@ -657,8 +694,11 @@ function vincularEventos() {
     if (!disparador) return;
 
     const accion = disparador.dataset.action;
-    const modulo = disparador.dataset.modulo;
     const id = disparador.dataset.id;
+    // Los botones de cada fila no repiten el módulo: se deduce de su vista.
+    const vista = disparador.closest('.vista');
+    const modulo = disparador.dataset.modulo || (vista && vista.dataset.vista);
+    if (!modulo || !MODULOS[modulo]) return;
 
     if (accion === 'nuevo') abrirFormulario(modulo);
     else if (accion === 'cancelar') cerrarFormulario(modulo);
@@ -672,6 +712,9 @@ function vincularEventos() {
       e.preventDefault();
       guardarFormulario(form.dataset.modulo, form);
     });
+    // Al corregir un campo se le quita el resaltado rojo en el acto
+    form.addEventListener('input', (e) => UI.limpiarErrorCampo(e.target));
+    form.addEventListener('change', (e) => UI.limpiarErrorCampo(e.target));
     // Enter en un input no debe recargar la vista
     form.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
@@ -681,11 +724,20 @@ function vincularEventos() {
     });
   });
 
-  // --- Búsqueda por módulo ---
+  // --- Búsqueda / filtro en tiempo real ---
   $$('[data-search]').forEach((input) => {
-    input.addEventListener('input', () => {
-      estado.filtros[input.dataset.search] = input.value;
-      renderTabla(input.dataset.search);
+    const modulo = input.dataset.search;
+    const aplicar = () => {
+      estado.filtros[modulo] = input.value;
+      renderTabla(modulo);
+    };
+    input.addEventListener('input', aplicar);   // filtra en cada tecla
+    input.addEventListener('search', aplicar);  // botón ✕ nativo del input
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || !input.value) return;
+      e.stopPropagation(); // que Escape no cierre también el formulario
+      input.value = '';
+      aplicar();
     });
   });
 
