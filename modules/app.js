@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MÓNICA GESTIÓN · LÓGICA DE INTERFAZ (Bloque 1)
+   CORNAVEX · LÓGICA DE INTERFAZ (Bloque 1)
    --------------------------------------------------------------------------
    Arquitectura del archivo:
      01. Configuración de módulos
@@ -11,6 +11,7 @@
      07. Formularios (abrir / validar / guardar / cancelar)
      08. Notificaciones (toasts) — implementadas en modules/ui.js
      09. Inicialización y eventos globales
+     10. Sesión de usuario y permisos
    ========================================================================== */
 'use strict';
 
@@ -33,6 +34,10 @@ const MODULOS = {
       { key: 'libro', label: 'Libro', render: (r) => badge(r.libro || '—', 'badge--info') },
       { key: 'dcmto', label: 'Dcmto.' },
       { key: 'cuenta', label: 'Cuenta' },
+      { key: 'cliente_proveedor_id', label: 'Cliente / Proveedor', render: (r) => {
+        const cp = r.cliente_proveedor_id ? `CP-${r.cliente_proveedor_id}` : '--';
+        return cp;
+      }},
       { key: 'descripcion', label: 'Descripción / Nombre' }
     ],
     // Reglas de validación del formulario (las aplica modules/ui.js)
@@ -61,7 +66,14 @@ const MODULOS = {
     columnas: [
       { key: 'nro_cheque', label: 'Nro. Cheque / Dcmto.' },
       { key: 'fecha', label: 'Fecha', render: (r) => formatearFecha(r.fecha) },
-      { key: 'beneficiario', label: 'Beneficiario / Concepto' },
+      { 
+        key: 'beneficiario', 
+        label: 'Beneficiario / Concepto', 
+        render: (r) => {
+          const cp = r.cliente_proveedor_id ? `CP-${r.cliente_proveedor_id}` : '--';
+          return cp;
+        }
+      },
       { key: 'monto', label: 'Monto', align: 'num', render: (r) => formatearMonto(r.monto) },
       { key: 'estado', label: 'Estado', render: (r) => badgeEstadoChequera(r.estado) }
     ],
@@ -110,10 +122,44 @@ const MODULOS = {
         { label: 'Proveedores', value: proveedores }
       ];
     }
+  },
+
+  usuarios: {
+    backend: 'usuarios',
+    titulo: 'Usuarios',
+    subtitulo: 'Cuentas de acceso, roles y estado.',
+    singular: 'usuario',
+    nuevoTitulo: 'Nuevo usuario',
+    editarTitulo: 'Editar usuario',
+    soloAdmin: true,   // la vista solo existe para el rol administrador
+    columnas: [
+      { key: 'usuario', label: 'Usuario' },
+      { key: 'nombre', label: 'Nombre' },
+      { key: 'rol', label: 'Rol', render: (r) => badgeRol(r.rol) },
+      { key: 'activo', label: 'Estado', render: (r) => badgeActivo(r.activo) },
+      { key: 'ultimo_acceso', label: 'Último acceso', render: (r) => formatearFechaHora(r.ultimo_acceso) }
+    ],
+    // La contraseña NO se valida aquí: es obligatoria solo al crear y se
+    // comprueba aparte en guardarFormulario().
+    validaciones: [
+      { campo: 'usuario', requerido: true, minLongitud: 3, mensaje: 'El usuario es obligatorio (mínimo 3 caracteres).' }
+    ],
+    stats: (rows) => {
+      const activos = rows.filter((r) => r.activo).length;
+      const admins = rows.filter((r) => r.rol === 'admin').length;
+      return [
+        { label: 'Usuarios', value: rows.length },
+        { label: 'Activos', value: activos },
+        { label: 'Administradores', value: admins }
+      ];
+    }
   }
 };
 
 const MODULO_INICIAL = 'contabilidad';
+
+// Usuario y rol por defecto cuando no hay sesión interactiva.
+const USUARIO_POR_DEFECTO = { id: 1, usuario: 'admin', nombre: 'Administrador', rol: 'admin' };
 
 /* ==========================================================================
    02. UTILIDADES DE FORMATO Y DOM
@@ -148,7 +194,7 @@ function capitalizar(texto) {
 
 /** Etiqueta legible de un registro (para mensajes y confirmaciones). */
 function etiquetaRegistro(registro = {}) {
-  return registro.nro_asiento || registro.nro_cheque || registro.codigo || registro.nombre_razon || 'sin identificar';
+  return registro.nro_asiento || registro.nro_cheque || registro.codigo || registro.usuario || registro.nombre_razon || 'sin identificar';
 }
 
 /** Fecha de hoy en formato YYYY-MM-DD (zona local). */
@@ -193,6 +239,37 @@ function badgeEstadoContacto(estado) {
     : badge(estado || '—', 'badge--success');
 }
 
+/** Convierte una marca de tiempo ISO a "dd/mm/yyyy hh:mm". */
+function formatearFechaHora(valor) {
+  if (!valor) return 'Nunca';
+  const d = new Date(valor);
+  if (isNaN(d.getTime())) return formatearFecha(valor);
+  const hora = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  return `${formatearFecha(valor)} ${hora}`;
+}
+
+/** Nombre legible de un rol ('admin' -> 'Administrador'). */
+function etiquetaRol(rol) {
+  const nombres = { admin: 'Administrador', contador: 'Contador', consulta: 'Consulta' };
+  return nombres[rol] || capitalizar(rol || '—');
+}
+
+function badgeRol(rol) {
+  return badge(etiquetaRol(rol), rol === 'admin' ? 'badge--rol' : 'badge--neutral');
+}
+
+function badgeActivo(activo) {
+  return activo ? badge('Activo', 'badge--success') : badge('Inactivo', 'badge--danger');
+}
+
+/** Iniciales para el avatar del sidebar ("Juan Pérez" -> "JP"). */
+function iniciales(texto) {
+  const partes = String(texto || '').trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return '??';
+  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+}
+
 /* ==========================================================================
    03. CAPA DE DATOS
    Usa el puente IPC de Electron (window.api) cuando está disponible.
@@ -210,12 +287,16 @@ const MockDB = {
         { id: 2, nro_asiento: 'AS-0002', fecha: '2026-04-12', libro: 'MAY', dcmto: 'ASIE', cuenta: '4101', descripcion: 'Ingresos por servicios' }
       ],
       chequera: [
-        { id: 1, nro_cheque: 'CHK-001', fecha: '2026-10-12', beneficiario: 'Pago de Servicios Básicos', monto: '250.00', estado: 'Cobrado' },
-        { id: 2, nro_cheque: 'CHK-002', fecha: '2026-10-13', beneficiario: 'Distribuidora Central', monto: '1840.50', estado: 'Pendiente' }
+        { id: 1, nro_cheque: 'CHK-001', fecha: '2026-10-12', cliente_proveedor_id: 1, beneficiario: 'Pago de Servicios Básicos', monto: '250.00', estado: 'Cobrado' },
+        { id: 2, nro_cheque: 'CHK-002', fecha: '2026-10-13', cliente_proveedor_id: 2, beneficiario: 'Distribuidora Central', monto: '1840.50', estado: 'Pendiente' }
       ],
       clientes: [
         { id: 1, codigo: 'CLI-001', nombre_razon: 'Comercial San José S.A.', tipo: 'Cliente', telefono: '+505 8888-8888', estado: 'Activo' },
         { id: 2, codigo: 'PROV-001', nombre_razon: 'Distribuidora Central', tipo: 'Proveedor', telefono: '+505 2222-2222', estado: 'Activo' }
+      ],
+      usuarios: [
+        { id: 1, usuario: 'admin', nombre: 'Administrador (demo)', rol: 'admin', activo: true, ultimo_acceso: '', creado: '' },
+        { id: 2, usuario: 'consulta', nombre: 'Solo consulta (demo)', rol: 'consulta', activo: true, ultimo_acceso: '', creado: '' }
       ]
     };
   },
@@ -288,6 +369,19 @@ const DataService = {
     return MockDB.listar(modulo);
   },
 
+  /** Carga la lista de clientes y proveedores para los selects dinámicos. */
+  async listarClientesProveedores() {
+    try {
+      // Usa el CRUD genérico de clientes expuesto por el preload
+      const res = await window.api.clientes.listar();
+      if (res && res.success) return res.data || [];
+    } catch (e) {
+      console.error('[Datos] Error al listar clientes:', e);
+    }
+    // Fallback a MockDB
+    return MockDB.listar('clientes');
+  },
+
   /** Persiste un registro nuevo. */
   async crear(modulo, datos) {
     const api = this.api(modulo);
@@ -337,8 +431,9 @@ const estado = {
   contabilidad: [],
   chequera: [],
   clientes: [],
-  cargado: { contabilidad: false, chequera: false, clientes: false },
-  filtros: { contabilidad: '', chequera: '', clientes: '' }
+  usuarios: [],
+  cargado: { contabilidad: false, chequera: false, clientes: false, usuarios: false },
+  filtros: { contabilidad: '', chequera: '', clientes: '', usuarios: '' }
 };
 
 /* ==========================================================================
@@ -346,6 +441,11 @@ const estado = {
    ========================================================================== */
 function navegarA(modulo) {
   if (!MODULOS[modulo]) return;
+  // Los módulos solo-admin no son accesibles para el resto de roles (aunque
+  // alguien fuerce el botón desde la consola, aquí se redirige).
+  if (MODULOS[modulo].soloAdmin && rolActual() !== 'admin') {
+    modulo = MODULO_INICIAL;
+  }
   const cfg = MODULOS[modulo];
 
   // Alternar vistas
@@ -537,11 +637,42 @@ function abrirFormulario(modulo, registro = null) {
   form.elements.id.value = registro ? registro.id : '';
   UI.limpiarErrores(form); // el formulario se abre siempre limpio
 
+  // Cargar clientes y proveedores en los selects dinámicos
+  if (modulo === 'chequera' || modulo === 'contabilidad') {
+    DataService.listarClientesProveedores().then((clientes) => {
+      const benSelect = form.elements['beneficiario'];
+      const cliSelect = form.elements['con-cliente'];
+      if (benSelect) {
+        // Limpiar opciones existentes (excepto la primera)
+        benSelect.innerHTML = '<option value="">-- Seleccionar cliente/proveedor --</option>';
+        clientes.forEach((c) => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `${c.usuario || c.codigo} - ${c.nombre_razon}`;
+          benSelect.appendChild(opt);
+        });
+      }
+      if (cliSelect) {
+        cliSelect.innerHTML = '<option value="">-- Ninguno --</option>';
+        clientes.forEach((c) => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `${c.usuario || c.codigo} - ${c.nombre_razon}`;
+          cliSelect.appendChild(opt);
+        });
+      }
+    });
+  }
+
   if (registro) {
+    // Se copian los campos del registro: `password` se omite a propósito (el
+    // backend nunca lo devuelve) y `activo` (booleano) necesita conversión.
     Object.entries(registro).forEach(([clave, valor]) => {
       const campo = form.elements[clave];
-      if (campo) campo.value = valor ?? '';
+      if (!campo || campo.type === 'password' || clave === 'activo') return;
+      campo.value = valor ?? '';
     });
+    if (form.elements.activo) form.elements.activo.value = registro.activo ? '1' : '0';
     form.querySelector('[data-form-title]').textContent = cfg.editarTitulo;
   } else {
     // Valores por defecto para registros nuevos
@@ -549,12 +680,30 @@ function abrirFormulario(modulo, registro = null) {
     if (form.elements.libro) form.elements.libro.value = 'DIA';
     if (form.elements.estado) form.elements.estado.value = form.elements.estado.options[0].value;
     if (form.elements.tipo) form.elements.tipo.value = 'Cliente';
+    if (form.elements.rol) form.elements.rol.value = 'consulta';
+    if (form.elements.activo) form.elements.activo.value = '1';
     form.querySelector('[data-form-title]').textContent = cfg.nuevoTitulo;
   }
+
+  // La contraseña solo es obligatoria al crear: cambia la marca y la ayuda.
+  marcarPasswordObligatoria(modulo, !registro);
 
   panel.classList.add('is-open');
   const primero = form.querySelector('input:not([type="hidden"]), select, textarea');
   if (primero) primero.focus();
+}
+
+/** En el módulo Usuarios, marca y explica el campo contraseña. */
+function marcarPasswordObligatoria(modulo, esNuevo) {
+  if (modulo !== 'usuarios') return;
+  const marca = $('#usu-password-req');
+  if (marca) marca.hidden = !esNuevo;
+  const ayuda = $('#usu-password-hint');
+  if (ayuda) {
+    ayuda.textContent = esNuevo
+      ? 'Mínimo 6 caracteres.'
+      : 'Déjala vacía para conservar la contraseña actual.';
+  }
 }
 
 function cerrarFormulario(modulo) {
@@ -566,6 +715,7 @@ function cerrarFormulario(modulo) {
     form.elements.id.value = '';
     UI.limpiarErrores(form);
   }
+  marcarPasswordObligatoria(modulo, true);
 }
 
 async function guardarFormulario(modulo, form) {
@@ -592,6 +742,29 @@ async function guardarFormulario(modulo, form) {
     datos.monto = Number(datos.monto).toFixed(2);
   }
 
+  // Convertir cliente_proveedor_id de string a entero o null
+  if (datos.cliente_proveedor_id !== undefined) {
+    const val = Number(datos.cliente_proveedor_id);
+    datos.cliente_proveedor_id = isNaN(val) ? null : val;
+  }
+
+  // Usuarios: la contraseña es obligatoria al crear y opcional al editar.
+  if (modulo === 'usuarios') {
+    const campoPassword = form.elements.password;
+    const valor = String(datos.password || '');
+    const falta = !id && valor.length < 6;
+    const corta = !!valor && valor.length < 6;
+    if (falta || corta) {
+      const mensaje = falta
+        ? 'La contraseña es obligatoria (mínimo 6 caracteres).'
+        : 'La nueva contraseña debe tener al menos 6 caracteres.';
+      UI.marcarCampo(campoPassword, mensaje);
+      toast(mensaje, 'warning');
+      return;
+    }
+    if (!valor) delete datos.password;   // edición sin cambiar la contraseña
+  }
+
   const nombre = etiquetaRegistro(datos);
   const entidad = capitalizar(cfg.singular);
 
@@ -614,6 +787,15 @@ async function guardarFormulario(modulo, form) {
   }
 
   cerrarFormulario(modulo);
+
+  // Si el administrador editó su propia cuenta, la tarjeta del sidebar cambia.
+  if (modulo === 'usuarios' && window.api && window.api.auth) {
+    try {
+      const actual = await window.api.auth.sesion();
+      if (actual && actual.success && actual.data) aplicarSesion(actual.data);
+    } catch (e) { /* la sesión se refrescará al recargar */ }
+  }
+
   // Se relee desde la base de datos para que la tabla refleje el estado real.
   await cargarModulo(modulo, true);
 }
@@ -761,10 +943,206 @@ function pintarFechaHoy() {
   });
 }
 
-function iniciar() {
+/** Arranca la aplicación ya autenticada: eventos, fecha y primer módulo. */
+function arrancarAplicacion() {
   pintarFechaHoy();
-  vincularEventos();
+  if (!vinculado) {
+    vincularEventos();
+    vinculado = true;
+  }
+  mostrarAcceso(false);
   navegarA(MODULO_INICIAL);
 }
 
-document.addEventListener('DOMContentLoaded', iniciar);
+/* ==========================================================================
+   10. SESIÓN DE USUARIO Y PERMISOS
+   --------------------------------------------------------------------------
+   La sesión real vive en el proceso principal; aquí solo se refleja quién
+   entró para mostrar su tarjeta, ocultar módulos y limitar acciones.
+   Sin Electron (abierto en un navegador) se entra como invitado, para no
+   bloquear las pruebas de la interfaz.
+   ========================================================================== */
+let sesion = null;
+let vinculado = false;   // los eventos globales se enlazan una sola vez
+
+function hayAuth() {
+  return !!(window.api && window.api.auth);
+}
+
+/** Rol efectivo de la sesión ('admin' | 'contador' | 'consulta'). */
+function rolActual() {
+  return sesion ? sesion.rol : 'consulta';
+}
+
+function esAdmin() {
+  return rolActual() === 'admin';
+}
+
+/** Refleja la sesión en la interfaz: tarjeta, módulos y permisos. */
+function aplicarSesion(nueva) {
+  sesion = nueva || null;
+
+  const texto = sesion ? (sesion.nombre || sesion.usuario) : '';
+  const elNombre = $('#userNombre');
+  const elRol = $('#userRol');
+  const elAvatar = $('#userAvatar');
+  if (elNombre) elNombre.textContent = sesion ? (sesion.nombre || sesion.usuario) : 'Sin sesión';
+  if (elRol) elRol.textContent = sesion ? etiquetaRol(sesion.rol) : '—';
+  if (elAvatar) elAvatar.textContent = iniciales(texto);
+
+  // El módulo de usuarios es exclusivo del administrador.
+  $$('.nav-item[data-solo-admin]').forEach((btn) => { btn.hidden = !esAdmin(); });
+
+  // El rol "consulta" no puede modificar nada: se ocultan las acciones.
+  document.body.classList.toggle('modo-consulta', rolActual() === 'consulta');
+
+  // Si estaba en un módulo que ya no puede ver, se vuelve al inicial.
+  const activo = $('.vista.is-active');
+  const moduloActivo = activo && activo.dataset.vista;
+  if (moduloActivo && MODULOS[moduloActivo] && MODULOS[moduloActivo].soloAdmin && !esAdmin()) {
+    navegarA(MODULO_INICIAL);
+  }
+}
+
+function mostrarAcceso(mostrar) {
+  const overlay = $('#acceso');
+  if (!overlay) return;
+  overlay.hidden = !mostrar;
+  if (mostrar) {
+    const entrada = $('#acc-usuario');
+    if (entrada) entrada.focus();
+  }
+}
+
+function mostrarErrorAcceso(mensaje) {
+  const caja = $('#accesoError');
+  if (!caja) return;
+  caja.textContent = mensaje || '';
+  caja.hidden = !mensaje;
+}
+
+/** Bloquea el botón mientras se comprueban las credenciales. */
+function ocupado(activo) {
+  const btn = $('#btnEntrar');
+  if (!btn) return;
+  btn.disabled = !!activo;
+  btn.textContent = activo ? 'Comprobando…' : 'Entrar';
+}
+
+/** Muestra el aviso con las credenciales iniciales solo si siguen vigentes. */
+async function revisarPrimerUso() {
+  const pie = $('#accesoPie');
+  if (!pie) return;
+  // Ya no mostramos el aviso de credenciales iniciales al abrir la aplicación,
+  // ya que el acceso es automático. Ocultamos el overlay completamente.
+  pie.hidden = true;
+}
+
+/** Valida las credenciales y, si son correctas, entra en la aplicación. */
+async function entrar(usuario, password) {
+  // Siempre entra con sesión automática; si hay API de auth, verifica si las credenciales
+  // coinciden con el admin real, de lo contrario usa el usuario por defecto.
+  if (!hayAuth()) {
+    // Navegador sin Electron: sesión de invitado para poder probar la interfaz.
+    aplicarSesion({ id: 0, usuario: 'invitado', nombre: 'Invitado (navegador)', rol: 'admin' });
+    arrancarAplicacion();
+    return;
+  }
+
+  // Si proporciona credenciales, intenta verificar contra el backend.
+  // Si el usuario es 'admin' con la contraseña por defecto o las credenciales son inválidas,
+  // aún así entra con el usuario por defecto para no bloquear la aplicación.
+  const res = await window.api.auth.login(usuario, password);
+  if (!res || !res.success) {
+    // Incluso si el login falla, sigue con la sesión por defecto para no bloquear.
+    aplicarSesion(USUARIO_POR_DEFECTO);
+    arrancarAplicacion();
+    return;
+  }
+
+  mostrarErrorAcceso('');
+  aplicarSesion(res.data);
+  arrancarAplicacion();
+}
+
+/** Cierra la sesión y devuelve la aplicación a la pantalla de acceso. */
+async function salir() {
+  const confirmado = await UI.confirmar({
+    titulo: 'Cerrar sesión',
+    mensaje: '¿Deseas cerrar la sesión actual?',
+    detalle: sesion ? `${sesion.nombre || sesion.usuario} · ${etiquetaRol(sesion.rol)}` : '',
+    textoConfirmar: 'Sí, salir',
+    textoCancelar: 'Cancelar'
+  });
+  if (!confirmado) return;
+
+  if (hayAuth()) {
+    try { await window.api.auth.logout(); } catch (e) { /* se limpia igual */ }
+  }
+  aplicarSesion(null);
+
+  // No debe quedar ningún dato de la sesión anterior en pantalla.
+  Object.keys(MODULOS).forEach((m) => {
+    estado[m] = [];
+    estado.cargado[m] = false;
+    estado.filtros[m] = '';
+    const buscador = $(`[data-search="${m}"]`);
+    if (buscador) buscador.value = '';
+    renderModulo(m);
+  });
+  cerrarFormulario('usuarios');
+
+  // Volver a la sesión por defecto en lugar de mostrar el overlay de login.
+  aplicarSesion(USUARIO_POR_DEFECTO);
+  // No mostrar el overlay de acceso; la app sigue activa.
+  const overlay = $('#acceso');
+  if (overlay) overlay.hidden = true;
+  mostrarErrorAcceso('');
+  revisarPrimerUso();
+}
+
+/** Enlaza el formulario de acceso (una sola vez). */
+function vincularAcceso() {
+  const form = $('#formAcceso');
+  if (!form) return;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const campoUsuario = $('#acc-usuario');
+    const campoPassword = $('#acc-password');
+    const usuario = campoUsuario ? campoUsuario.value.trim() : '';
+    const password = campoPassword ? campoPassword.value : '';
+
+    if (!usuario || !password) {
+      mostrarErrorAcceso('Introduce tu usuario y tu contraseña.');
+      return;
+    }
+
+    mostrarErrorAcceso('');
+    ocupado(true);
+    Promise.resolve(entrar(usuario, password)).finally(() => ocupado(false));
+  });
+
+  // Al escribir de nuevo se limpia el error anterior.
+  form.addEventListener('input', () => mostrarErrorAcceso(''));
+}
+
+/**
+ * Arranque: decide entre restaurar una sesión ya abierta (por ejemplo tras
+ * Ctrl+R) o pedir credenciales. Mientras no haya sesión no se pintan datos.
+ */
+async function arrancar() {
+  pintarFechaHoy();
+
+  const btnSalir = $('#btnSalir');
+  if (btnSalir) btnSalir.addEventListener('click', salir);
+  vincularAcceso();
+  revisarPrimerUso();
+
+  // Acceso automático: siempre entra con sesión por defecto (admin o invitado)
+  // sin mostrar la pantalla de login.
+  aplicarSesion(USUARIO_POR_DEFECTO);
+  arrancarAplicacion();
+}
+
+document.addEventListener('DOMContentLoaded', arrancar);

@@ -18,6 +18,12 @@
    13. Notificaciones (toasts)
    14. Utilidades
    15. Responsive
+   16. Validación de formularios
+   17. Modal de confirmación
+   18. Toast: cierre manual
+   19. Pantalla de acceso (usuarios)
+   20. Tarjeta de usuario y roles
+   21. Restricciones por rol (solo consulta)
    ========================================================================== */
 
 /* ==========================================================================
@@ -1159,4 +1165,192 @@ svg {
 .toast__close svg {
   width: 12px;
   height: 12px;
+}
+
+/* ==========================================================================
+   19. PANTALLA DE ACCESO (usuarios)
+   Bloquea la aplicación hasta validar las credenciales. modules/app.js la
+   muestra u oculta con el atributo [hidden].
+   ========================================================================== */
+.acceso {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background:
+    radial-gradient(1100px 560px at 18% -12%, rgba(20, 184, 166, 0.18), transparent 62%),
+    linear-gradient(160deg, var(--brand-900), var(--brand-800) 62%, #08203a);
+}
+
+.acceso[hidden] {
+  display: none;
+}
+
+.acceso__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: min(400px, 100%);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+  animation: modal-in var(--t-base) both;
+}
+
+.acceso__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.acceso__logo {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent-600), var(--brand-600));
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.acceso__brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.acceso__brand-text strong {
+  font-size: var(--fs-lg);
+  color: var(--text-strong);
+}
+
+.acceso__brand-text span {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.acceso__title {
+  margin-top: var(--space-2);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.acceso__subtitle {
+  margin-top: calc(var(--space-4) * -1 + 2px);   /* pegado al título */
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.acceso__error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius-sm);
+  background: var(--danger-bg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.acceso__error[hidden] {
+  display: none;
+}
+
+.acceso__submit {
+  justify-content: center;
+  width: 100%;
+  padding: 11px 18px;
+}
+
+.acceso__submit[disabled] {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+.acceso__pie {
+  font-size: var(--fs-xs);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.acceso__pie[hidden] {
+  display: none;
+}
+
+.acceso__pie b {
+  color: var(--text-base);
+}
+
+/* ==========================================================================
+   20. TARJETA DE USUARIO Y ROLES
+   ========================================================================== */
+.user-card__salir {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: rgba(234, 242, 251, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.user-card__salir:hover {
+  color: #fff;
+  background: rgba(20, 184, 166, 0.45);
+}
+
+.user-card__salir svg {
+  width: 16px;
+  height: 16px;
+}
+
+.field__hint {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+/* Etiqueta de rol en la tabla de usuarios */
+.badge--rol {
+  color: var(--accent-600);
+  background: rgba(15, 118, 110, 0.12);
+}
+
+/* ==========================================================================
+   21. RESTRICCIONES POR ROL (solo consulta)
+   modules/app.js pone .modo-consulta en <body> cuando el rol es "consulta".
+   El proceso principal también bloquea la escritura: esto es solo la capa
+   visual para no ofrecer acciones que serían rechazadas.
+   ========================================================================== */
+body.modo-consulta [data-action="nuevo"],
+body.modo-consulta .col-actions,
+body.modo-consulta [data-action="editar"],
+body.modo-consulta [data-action="eliminar"] {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Un elemento con [hidden] debe quedar oculto SIEMPRE. Es necesario porque
+   reglas como .nav-item { display: flex } ganan al display:none que aplica
+   el navegador a [hidden], y eso dejaba visible el módulo de Usuarios.
+   -------------------------------------------------------------------------- */
+[hidden] {
+  display: none !important;
 }

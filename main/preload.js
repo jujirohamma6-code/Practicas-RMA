@@ -1,9 +1,11 @@
 /* ==========================================================================
-   MÓNICA GESTIÓN · PRELOAD
+   CORNAVEX · PRELOAD
    --------------------------------------------------------------------------
    Puente seguro entre el renderer y el proceso principal (contextBridge).
    Se expone `window.api` con:
      - api.contabilidad / api.chequera / api.clientes  → CRUD por módulo
+     - api.auth     → iniciar/cerrar sesión y consultar la sesión activa
+     - api.usuarios → gestión de usuarios (solo administradores)
      - alias explícitos (obtenerClientes, guardarCliente, ...)
      - compatibilidad con las vistas antiguas (consultarDatos / guardarRegistro)
      - navegación entre vistas (navegarA)
@@ -34,6 +36,20 @@ contextBridge.exposeInMainWorld('api', {
     contabilidad: crud('contabilidad'),
     chequera: crud('chequera'),
     clientes: crud('clientes'),
+
+    /* ---------- Sesión y usuarios ---------- */
+    auth: {
+        login: (usuario, password) => ipcRenderer.invoke('auth:login', { usuario, password }),
+        sesion: () => ipcRenderer.invoke('auth:sesion'),
+        logout: () => ipcRenderer.invoke('auth:logout'),
+        estado: () => ipcRenderer.invoke('auth:estado')
+    },
+    usuarios: {
+        listar: () => ipcRenderer.invoke('usuarios:listar'),
+        crear: (datos) => ipcRenderer.invoke('usuarios:crear', { datos }),
+        actualizar: (id, datos) => ipcRenderer.invoke('usuarios:actualizar', { id, datos }),
+        eliminar: (id) => ipcRenderer.invoke('usuarios:eliminar', { id })
+    },
 
     /* ---------- Alias explícitos (comodidad) ---------- */
     obtenerClientes: () => ipcRenderer.invoke(CANAL.listar, { modulo: 'clientes' }),

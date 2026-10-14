@@ -51,15 +51,31 @@
           </svg>
           <span class="nav-item__text">Clientes y Proveedores</span>
         </button>
+
+        <button class="nav-item" type="button" data-vista="usuarios" data-solo-admin hidden>
+          <svg class="nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="9.5" cy="8" r="3.2"/>
+            <path d="M4 20a5.5 5.5 0 0 1 11 0"/>
+            <path d="M17 7.5l1.6 1.6L22 5.7"/>
+          </svg>
+          <span class="nav-item__text">Usuarios</span>
+        </button>
       </nav>
 
       <div class="sidebar__footer">
         <div class="user-card">
-          <div class="user-card__avatar">EM</div>
+          <div class="user-card__avatar" id="userAvatar">--</div>
           <div class="user-card__info">
-            <strong>Estudiante</strong>
-            <span>Sesión local</span>
+            <strong id="userNombre">Sin sesión</strong>
+            <span id="userRol">—</span>
           </div>
+          <button class="user-card__salir" type="button" id="btnSalir" title="Cerrar sesión" aria-label="Cerrar sesión">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/>
+              <path d="M10 17l-5-5 5-5"/>
+              <path d="M5 12h10"/>
+            </svg>
+          </button>
         </div>
       </div>
     </aside>
@@ -141,6 +157,12 @@
                   <label for="con-cuenta">Cuenta</label>
                   <input id="con-cuenta" name="cuenta" type="text" placeholder="1101">
                 </div>
+                <div class="field">
+                  <label for="con-cliente">Cliente / Proveedor</label>
+                  <select id="con-cliente" name="cliente_proveedor_id" class="select-clientes-proveedores">
+                    <option value="">-- Ninguno --</option>
+                  </select>
+                </div>
                 <div class="field field--full">
                   <label for="con-desc">Descripción / Nombre</label>
                   <textarea id="con-desc" name="descripcion" rows="2" placeholder="Detalle del asiento contable"></textarea>
@@ -219,7 +241,12 @@
                 </div>
                 <div class="field">
                   <label for="che-ben">Beneficiario / Concepto</label>
-                  <input id="che-ben" name="beneficiario" type="text" placeholder="Pago de servicios">
+                  <select id="che-ben" name="beneficiario" class="select-clientes-proveedores">
+                    <option value="">-- Seleccionar cliente/proveedor --</option>
+                  </select>
+                  <button class="btn btn--small btn--secondary" type="button" data-action="agregar-cliente" title="Agregar nuevo cliente/proveedor">
+                    + Agregar
+                  </button>
                 </div>
                 <div class="field">
                   <label for="che-monto">Monto <span class="req">*</span></label>
@@ -357,8 +384,133 @@
           </div>
         </section>
 
+        <!-- ============ MÓDULO: USUARIOS (solo administradores) ============ -->
+        <section class="vista" id="vista-usuarios" data-vista="usuarios">
+          <div class="vista__header">
+            <div>
+              <h2 class="vista__title">Usuarios</h2>
+              <p class="vista__subtitle">Cuentas de acceso al sistema, roles y estado.</p>
+            </div>
+            <button class="btn btn--primary" type="button" data-action="nuevo" data-modulo="usuarios">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo usuario
+            </button>
+          </div>
+
+          <div class="stats" id="stats-usuarios"></div>
+
+          <div class="form-panel" id="form-usuarios">
+            <form class="form" data-modulo="usuarios" novalidate>
+              <div class="form__header">
+                <h3 class="form__title" data-form-title>Nuevo usuario</h3>
+                <button class="icon-btn form__close" type="button" data-action="cancelar" data-modulo="usuarios" aria-label="Cerrar formulario">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+              </div>
+
+              <input type="hidden" name="id">
+
+              <div class="form__grid">
+                <div class="field">
+                  <label for="usu-usuario">Usuario <span class="req">*</span></label>
+                  <input id="usu-usuario" name="usuario" type="text" placeholder="jperez" autocapitalize="none" spellcheck="false" required>
+                </div>
+                <div class="field">
+                  <label for="usu-nombre">Nombre completo</label>
+                  <input id="usu-nombre" name="nombre" type="text" placeholder="Juan Pérez">
+                </div>
+                <div class="field">
+                  <label for="usu-rol">Rol</label>
+                  <select id="usu-rol" name="rol">
+                    <option value="consulta">Consulta (solo lectura)</option>
+                    <option value="contador">Contador (lectura y escritura)</option>
+                    <option value="admin">Administrador (todo)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="usu-activo">Estado</label>
+                  <select id="usu-activo" name="activo">
+                    <option value="1">Activo</option>
+                    <option value="0">Inactivo</option>
+                  </select>
+                </div>
+                <div class="field field--full">
+                  <label for="usu-password">Contraseña <span class="req" id="usu-password-req">*</span></label>
+                  <input id="usu-password" name="password" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+                  <p class="field__hint" id="usu-password-hint">Al editar, déjala vacía para conservar la actual.</p>
+                </div>
+              </div>
+
+              <div class="form__actions">
+                <button class="btn btn--ghost" type="button" data-action="cancelar" data-modulo="usuarios">Cancelar</button>
+                <button class="btn btn--primary" type="submit">Guardar usuario</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="table-card">
+            <div class="table-card__toolbar">
+              <div class="search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="search" placeholder="Buscar usuarios..." data-search="usuarios" aria-label="Buscar usuarios">
+              </div>
+              <span class="table-card__count" data-count="usuarios"></span>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Nombre</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Último acceso</th>
+                    <th class="col-actions">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody data-tbody="usuarios"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
       </main>
     </div>
+  </div>
+
+  <!-- ===================== ACCESO =====================
+       Bloquea la aplicación hasta validar las credenciales.
+       Lo controla modules/app.js; el hash nunca llega hasta aquí. -->
+  <div class="acceso" id="acceso" role="dialog" aria-modal="true" aria-labelledby="accesoTitle">
+    <form class="acceso__card" id="formAcceso" novalidate>
+      <div class="acceso__brand">
+        <div class="acceso__logo">CV</div>
+        <div class="acceso__brand-text">
+          <strong>Cornavex</strong>
+          <span>Sistema Contable</span>
+        </div>
+      </div>
+
+      <h1 class="acceso__title" id="accesoTitle">Iniciar sesión</h1>
+      <p class="acceso__subtitle">Acceso restringido. Introduce tus credenciales.</p>
+
+      <div class="field">
+        <label for="acc-usuario">Usuario</label>
+        <input id="acc-usuario" name="usuario" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="admin" required>
+      </div>
+      <div class="field">
+        <label for="acc-password">Contraseña</label>
+        <input id="acc-password" name="password" type="password" autocomplete="current-password" placeholder="••••••" required>
+      </div>
+
+      <p class="acceso__error" id="accesoError" role="alert" hidden></p>
+
+      <button class="btn btn--primary acceso__submit" type="submit" id="btnEntrar">Entrar</button>
+
+      <p class="acceso__pie" id="accesoPie" hidden>
+        Usuario inicial: <b>admin</b> · contraseña <b>admin123</b>. Cámbiala en el módulo Usuarios.
+      </p>
+    </form>
   </div>
 
   <!-- Modal de confirmación reutilizable (lo controla modules/ui.js) -->
