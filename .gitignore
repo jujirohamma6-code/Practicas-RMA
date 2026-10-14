@@ -1,0 +1,14 @@
+node_modules/
+dist/
+out/
+*.log
+npm-debug.log*
+
+# Base de datos local de desarrollo (se guarda en userData)
+monica.db
+*.sqlite
+*.sqlite3
+
+# Sistema
+Thumbs.db
+.DS_Store

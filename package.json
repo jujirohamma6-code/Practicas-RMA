@@ -1,0 +1,18 @@
+{
+  "name": "monica9-parametros",
+  "version": "1.0.0",
+  "description": "Prototipo Electron de los módulos Parámetros y Manual de MÓNICA 9",
+  "main": "main.js",
+  "author": "Tirsa",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "start:debug": "electron . --enable-logging"
+  },
+  "dependencies": {
+    "sql.js": "^1.11.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}
