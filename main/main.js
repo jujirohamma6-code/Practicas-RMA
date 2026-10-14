@@ -19,6 +19,22 @@ const fs = require('fs');
 const { all, run, MODELOS } = require('../database/db');
 
 /* ==========================================================================
+   MODO DESARROLLO
+   ---------------------------------------------------------------------------
+   DEV es true solo cuando NO estamos empaquetados y el usuario lo pidió
+   explícitamente (scripts "dev" de package.json o INICIAR con CX_DEV=1).
+   Así nunca desactivamos la caché ni mostramos DevTools en producción.
+   ========================================================================== */
+const DEV = !app.isPackaged && (process.argv.includes('--dev') || process.env.CX_DEV === '1');
+
+if (DEV) {
+    // Deben ir ANTES de app.whenReady() para que Chromium los aplique al arrancar.
+    app.commandLine.appendSwitch('disable-http-cache');
+    app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+    console.log('[CX-DEV] Modo desarrollo activo: caché HTTP desactivada.');
+}
+
+/* ==========================================================================
    1. DIAGNÓSTICO Y BLINDAJE DE ARRANQUE
    ========================================================================== */
 const LOG_FILE = path.join(__dirname, '..', 'electron-error.log');
@@ -27,7 +43,7 @@ function registrarError(origen, error) {
     const detalle = (error && (error.stack || error.message)) || error;
     const texto = `\n[${new Date().toISOString()}] ${origen}\n${detalle}\n`;
     try { fs.appendFileSync(LOG_FILE, texto); } catch (e) { /* sin permisos de escritura */ }
-    console.error(`[MG-ERROR] ${origen}:`, detalle);
+    console.error(`[CX-ERROR] ${origen}:`, detalle);
 }
 
 // Evita cierres inmediatos en Windows causados por la aceleración gráfica.
@@ -51,6 +67,7 @@ function createWindow() {
         width: 1200,
         height: 800,
         show: false,
+        title: 'Cornavex · Sistema Contable',
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -60,6 +77,39 @@ function createWindow() {
 
     // Cargar la interfaz principal unificada (sidebar + módulos)
     mainWindow.loadFile(path.join(__dirname, '..', 'src', 'index.html'));
+
+    /* --- (a) Sin caché en desarrollo + evidencia de la ruta real cargada --- */
+    if (DEV) {
+        mainWindow.webContents.session.clearCache()
+            .then(() => console.log('[CX-DEV] Caché de sesión limpiada.'))
+            .catch((e) => console.warn('[CX-DEV] No se pudo limpiar la caché:', e.message));
+
+        // Se dispara en cada recarga: confirma QUÉ archivo se cargó de verdad.
+        mainWindow.webContents.on('did-finish-load', () => {
+            console.log('[CX-DEV] cargado →', mainWindow.webContents.getURL());
+        });
+    }
+
+    /* --- (b) Atajos de recarga en el contexto de ESTA ventana ---
+       Ctrl+R       → recarga normal (lee el disco de nuevo)
+       Ctrl+Shift+R → recarga ignorando cualquier caché
+       Ctrl+Shift+I → DevTools (solo en desarrollo) */
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.type !== 'keyDown') return;
+        const ctrl = input.control || input.meta;   // control en Win/Linux, cmd en macOS
+        const tecla = (input.key || '').toLowerCase();
+
+        if (ctrl && tecla === 'r') {
+            event.preventDefault();
+            if (input.shift) mainWindow.webContents.reloadIgnoringCache();
+            else mainWindow.webContents.reload();
+            return;
+        }
+        if (DEV && ctrl && input.shift && tecla === 'i') {
+            event.preventDefault();
+            mainWindow.webContents.toggleDevTools();
+        }
+    });
 
     // Mostrar la ventana recién cuando el contenido terminó de cargar.
     mainWindow.once('ready-to-show', () => {
@@ -76,8 +126,8 @@ function createWindow() {
         registrarError('did-fail-load', `codigo=${code} descripcion=${desc} url=${url}`);
     });
 
-    // Herramientas de desarrollo: solo con `electron . --debug` o MG_DEV=1.
-    if (process.argv.includes('--debug') || process.env.MG_DEV) {
+    // Herramientas de desarrollo: solo con `electron . --debug` o CX_DEV=1.
+    if (process.argv.includes('--debug') || process.env.CX_DEV) {
         mainWindow.webContents.openDevTools({ mode: 'detach' });
     }
 

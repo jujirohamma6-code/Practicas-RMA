@@ -1,10 +1,16 @@
 {
-  "name": "monica-gestion",
+  "name": "cornavex",
+  "productName": "Cornavex",
   "version": "1.0.0",
-  "description": "Sistema Contable - Mónica Gestión",
+  "description": "Cornavex · Sistema Contable y de Gestión",
   "main": "main/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dev": "set CX_DEV=1&& electron . --dev",
+    "clean": "taskkill /F /IM electron.exe /T 2>nul & rd /s /q \"%APPDATA%\\monica-gestion\\Cache\" 2>nul & rd /s /q \"%APPDATA%\\monica-gestion\\Code Cache\" 2>nul & rd /s /q \"%APPDATA%\\monica-gestion\\GPUCache\" 2>nul & rd /s /q \"%APPDATA%\\monica-gestion\\DawnCache\" 2>nul",
+    "dev:clean": "npm run clean & npm run dev",
+    "alcance": "node scripts/alcance.js",
+    "diagnostico": "electron scripts/diagnostico.js"
   },
   "devDependencies": {
     "electron": "^30.5.1"
@@ -13,7 +19,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "better-sqlite3": "^13.0.3",
     "sqlite3": "^6.0.1"
   }
 }
