@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cornavex · Sistema Contable</title>
+  <title>Cornavex Â· Sistema Contable</title>
   <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
   <div class="app-shell">
 
     <!-- ===================== SIDEBAR ===================== -->
-    <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+    <aside class="sidebar" id="sidebar" aria-label="NavegaciÃ³n principal">
 
       <div class="brand">
         <div class="brand__logo">CV</div>
@@ -21,8 +21,8 @@
         </div>
       </div>
 
-      <nav class="nav" aria-label="Módulos">
-        <p class="nav__label">Módulos</p>
+      <nav class="nav" aria-label="MÃ³dulos">
+        <p class="nav__label">MÃ³dulos</p>
 
         <button class="nav-item is-active" type="button" data-vista="contabilidad">
           <svg class="nav-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -66,10 +66,10 @@
         <div class="user-card">
           <div class="user-card__avatar" id="userAvatar">--</div>
           <div class="user-card__info">
-            <strong id="userNombre">Sin sesión</strong>
-            <span id="userRol">—</span>
+            <strong id="userNombre">Sin sesiÃ³n</strong>
+            <span id="userRol">â€”</span>
           </div>
-          <button class="user-card__salir" type="button" id="btnSalir" title="Cerrar sesión" aria-label="Cerrar sesión">
+          <button class="user-card__salir" type="button" id="btnSalir" title="Cerrar sesiÃ³n" aria-label="Cerrar sesiÃ³n">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/>
               <path d="M10 17l-5-5 5-5"/>
@@ -82,11 +82,11 @@
 
     <div class="sidebar-scrim" id="sidebarScrim" hidden></div>
 
-    <!-- ===================== ÁREA PRINCIPAL ===================== -->
+    <!-- ===================== ÃREA PRINCIPAL ===================== -->
     <div class="main">
 
       <header class="topbar">
-        <button class="icon-btn topbar__menu" type="button" id="menu-btn" aria-controls="sidebar" aria-expanded="true" aria-label="Mostrar u ocultar menú lateral">
+        <button class="icon-btn topbar__menu" type="button" id="menu-btn" aria-controls="sidebar" aria-expanded="true" aria-label="Mostrar u ocultar menÃº lateral">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
             <path d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
@@ -104,7 +104,7 @@
 
       <main class="content" id="content">
 
-        <!-- ============ MÓDULO: CONTABILIDAD ============ -->
+        <!-- ============ MÃ“DULO: CONTABILIDAD ============ -->
         <section class="vista is-active" id="vista-contabilidad" data-vista="contabilidad">
           <div class="vista__header">
             <div>
@@ -164,7 +164,7 @@
                   </select>
                 </div>
                 <div class="field field--full">
-                  <label for="con-desc">Descripción / Nombre</label>
+                  <label for="con-desc">DescripciÃ³n / Nombre</label>
                   <textarea id="con-desc" name="descripcion" rows="2" placeholder="Detalle del asiento contable"></textarea>
                 </div>
               </div>
@@ -194,7 +194,7 @@
                     <th>Libro</th>
                     <th>Dcmto.</th>
                     <th>Cuenta</th>
-                    <th>Descripción / Nombre</th>
+                    <th>DescripciÃ³n / Nombre</th>
                     <th class="col-actions">Acciones</th>
                   </tr>
                 </thead>
@@ -204,7 +204,7 @@
           </div>
         </section>
 
-        <!-- ============ MÓDULO: CUENTAS CORRIENTES / CHEQUERA ============ -->
+        <!-- ============ MÃ“DULO: CUENTAS CORRIENTES / CHEQUERA ============ -->
         <section class="vista" id="vista-chequera" data-vista="chequera">
           <div class="vista__header">
             <div>
@@ -296,12 +296,12 @@
           </div>
         </section>
 
-        <!-- ============ MÓDULO: CLIENTES Y PROVEEDORES ============ -->
+        <!-- ============ MÃ“DULO: CLIENTES Y PROVEEDORES ============ -->
         <section class="vista" id="vista-clientes" data-vista="clientes">
           <div class="vista__header">
             <div>
               <h2 class="vista__title">Clientes y Proveedores</h2>
-              <p class="vista__subtitle">Directorio de contactos con tipo, teléfono y estado.</p>
+              <p class="vista__subtitle">Directorio de contactos con tipo, telÃ©fono y estado.</p>
             </div>
             <button class="btn btn--primary" type="button" data-action="nuevo" data-modulo="clientes">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
@@ -324,7 +324,7 @@
 
               <div class="form__grid">
                 <div class="field">
-                  <label for="cli-cod">Código <span class="req">*</span></label>
+                  <label for="cli-cod">CÃ³digo <span class="req">*</span></label>
                   <input id="cli-cod" name="codigo" type="text" placeholder="CLI-0001" required>
                 </div>
                 <div class="field">
@@ -335,11 +335,11 @@
                   </select>
                 </div>
                 <div class="field field--full">
-                  <label for="cli-nombre">Nombre / Razón Social <span class="req">*</span></label>
-                  <input id="cli-nombre" name="nombre_razon" type="text" placeholder="Comercial San José S.A." required>
+                  <label for="cli-nombre">Nombre / RazÃ³n Social <span class="req">*</span></label>
+                  <input id="cli-nombre" name="nombre_razon" type="text" placeholder="Comercial San JosÃ© S.A." required>
                 </div>
                 <div class="field">
-                  <label for="cli-tel">Teléfono</label>
+                  <label for="cli-tel">TelÃ©fono</label>
                   <input id="cli-tel" name="telefono" type="tel" placeholder="+505 8888-8888">
                 </div>
                 <div class="field">
@@ -370,10 +370,10 @@
               <table class="table">
                 <thead>
                   <tr>
-                    <th>Código</th>
-                    <th>Nombre / Razón Social</th>
+                    <th>CÃ³digo</th>
+                    <th>Nombre / RazÃ³n Social</th>
                     <th>Tipo</th>
-                    <th>Teléfono</th>
+                    <th>TelÃ©fono</th>
                     <th>Estado</th>
                     <th class="col-actions">Acciones</th>
                   </tr>
@@ -384,7 +384,7 @@
           </div>
         </section>
 
-        <!-- ============ MÓDULO: USUARIOS (solo administradores) ============ -->
+        <!-- ============ MÃ“DULO: USUARIOS (solo administradores) ============ -->
         <section class="vista" id="vista-usuarios" data-vista="usuarios">
           <div class="vista__header">
             <div>
@@ -417,7 +417,7 @@
                 </div>
                 <div class="field">
                   <label for="usu-nombre">Nombre completo</label>
-                  <input id="usu-nombre" name="nombre" type="text" placeholder="Juan Pérez">
+                  <input id="usu-nombre" name="nombre" type="text" placeholder="Juan PÃ©rez">
                 </div>
                 <div class="field">
                   <label for="usu-rol">Rol</label>
@@ -435,9 +435,9 @@
                   </select>
                 </div>
                 <div class="field field--full">
-                  <label for="usu-password">Contraseña <span class="req" id="usu-password-req">*</span></label>
-                  <input id="usu-password" name="password" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
-                  <p class="field__hint" id="usu-password-hint">Al editar, déjala vacía para conservar la actual.</p>
+                  <label for="usu-password">ContraseÃ±a <span class="req" id="usu-password-req">*</span></label>
+                  <input id="usu-password" name="password" type="password" autocomplete="new-password" placeholder="MÃ­nimo 6 caracteres">
+                  <p class="field__hint" id="usu-password-hint">Al editar, dÃ©jala vacÃ­a para conservar la actual.</p>
                 </div>
               </div>
 
@@ -464,7 +464,7 @@
                     <th>Nombre</th>
                     <th>Rol</th>
                     <th>Estado</th>
-                    <th>Último acceso</th>
+                    <th>Ãšltimo acceso</th>
                     <th class="col-actions">Acciones</th>
                   </tr>
                 </thead>
@@ -479,8 +479,8 @@
   </div>
 
   <!-- ===================== ACCESO =====================
-       Bloquea la aplicación hasta validar las credenciales.
-       Lo controla modules/app.js; el hash nunca llega hasta aquí. -->
+       Bloquea la aplicaciÃ³n hasta validar las credenciales.
+       Lo controla modules/app.js; el hash nunca llega hasta aquÃ­. -->
   <div class="acceso" id="acceso" role="dialog" aria-modal="true" aria-labelledby="accesoTitle">
     <form class="acceso__card" id="formAcceso" novalidate>
       <div class="acceso__brand">
@@ -491,7 +491,7 @@
         </div>
       </div>
 
-      <h1 class="acceso__title" id="accesoTitle">Iniciar sesión</h1>
+      <h1 class="acceso__title" id="accesoTitle">Iniciar sesiÃ³n</h1>
       <p class="acceso__subtitle">Acceso restringido. Introduce tus credenciales.</p>
 
       <div class="field">
@@ -499,8 +499,8 @@
         <input id="acc-usuario" name="usuario" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="admin" required>
       </div>
       <div class="field">
-        <label for="acc-password">Contraseña</label>
-        <input id="acc-password" name="password" type="password" autocomplete="current-password" placeholder="••••••" required>
+        <label for="acc-password">ContraseÃ±a</label>
+        <input id="acc-password" name="password" type="password" autocomplete="current-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢" required>
       </div>
 
       <p class="acceso__error" id="accesoError" role="alert" hidden></p>
@@ -508,12 +508,12 @@
       <button class="btn btn--primary acceso__submit" type="submit" id="btnEntrar">Entrar</button>
 
       <p class="acceso__pie" id="accesoPie" hidden>
-        Usuario inicial: <b>admin</b> · contraseña <b>admin123</b>. Cámbiala en el módulo Usuarios.
+        Usuario inicial: <b>admin</b> Â· contraseÃ±a <b>admin123</b>. CÃ¡mbiala en el mÃ³dulo Usuarios.
       </p>
     </form>
   </div>
 
-  <!-- Modal de confirmación reutilizable (lo controla modules/ui.js) -->
+  <!-- Modal de confirmaciÃ³n reutilizable (lo controla modules/ui.js) -->
   <dialog class="modal" id="modalConfirm" aria-labelledby="modalConfirmTitulo">
     <div class="modal__icon" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -521,7 +521,7 @@
         <path d="M12 9v4"/><path d="M12 17h.01"/>
       </svg>
     </div>
-    <h3 class="modal__title" id="modalConfirmTitulo" data-modal-title>Confirmar acción</h3>
+    <h3 class="modal__title" id="modalConfirmTitulo" data-modal-title>Confirmar acciÃ³n</h3>
     <p class="modal__text" data-modal-text></p>
     <p class="modal__detail" data-modal-detail hidden></p>
     <div class="modal__actions">
@@ -533,8 +533,8 @@
   <!-- Notificaciones -->
   <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- Kit de UI (toasts, modal y validación) + lógica de la aplicación -->
-  <script src="../modules/ui.js"></script>
-  <script src="../modules/app.js"></script>
+  <!-- Kit de UI (toasts, modal y validaciÃ³n) + lÃ³gica de la aplicaciÃ³n -->
+  <script src="modules/ui.js"></script>
+  <script src="modules/app.js"></script>
 </body>
 </html>
