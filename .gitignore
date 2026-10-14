@@ -1,4 +1,5 @@
 node_modules/
+<<<<<<< HEAD
 dist/
 out/
 *.log
@@ -12,3 +13,6 @@ monica.db
 # Sistema
 Thumbs.db
 .DS_Store
+=======
+electron-error.log
+>>>>>>> e075c6cc744bc1199a369dc263fe9e0ce334e795
