@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MÓNICA 9 · Manual de Usuario</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Usuario — Monica-23</title>
 <style>
   :root {
     --bg: #0f172a;
     --bg-2: #111827;
     --bg-3: #1e293b;
-    --panel: #1e293b;
-    --panel-2: #111827;
+    --bg-4: #0b1120;
     --border: #334155;
     --border-soft: #1e293b;
     --text: #f8fafc;
@@ -20,833 +19,410 @@
     --accent-2: #1d4ed8;
     --accent-light: #60a5fa;
     --accent-soft: rgba(37, 99, 235, .18);
-    --radius: 10px;
-    --shadow: 0 12px 34px rgba(0, 0, 0, .5);
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --shadow: 0 14px 38px rgba(0, 0, 0, .5);
+    --radius: 14px;
   }
-
-  * { box-sizing: border-box; }
-
-  html, body { margin: 0; padding: 0; height: 100%; }
-
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--bg-4) 100%);
     color: var(--text);
-    line-height: 1.65;
-    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    overflow: hidden;
   }
 
-  .app { display: flex; flex-direction: column; min-height: 100vh; }
-
-  ::selection { background: rgba(37, 99, 235, .4); }
-
-  /* ---------- Toolbar ---------- */
-  .toolbar {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    background: linear-gradient(180deg, #111827, #090d16);
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 28px;
+    background: rgba(17, 24, 39, .85);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
-    padding: 11px 16px;
-    position: sticky;
-    top: 0;
-    z-index: 20;
+    position: sticky; top: 0; z-index: 100;
   }
-
-  .toolbar__brand {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding-right: 14px;
-    margin-right: 4px;
-    border-right: 1px solid var(--border);
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-left h1 { font-size: 18px; font-weight: 600; color: var(--text); }
+  .badge {
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent-light);
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
   }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
 
-  .toolbar__mark {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
-    font-weight: 700;
-    font-size: 14px;
-    color: #fff;
-    background: linear-gradient(140deg, var(--accent), var(--accent-2));
-    box-shadow: 0 6px 16px rgba(37, 99, 235, .4);
-    flex-shrink: 0;
-  }
-
-  .toolbar__name { font-size: .95rem; font-weight: 700; letter-spacing: .2px; }
-  .toolbar__name span { display: block; font-size: .72rem; font-weight: 400; color: var(--text-dim); letter-spacing: .3px; }
-
-  .toolbar__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-  .tbtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 13px;
-    background: var(--bg-3);
+  .nav-btn {
+    padding: 8px 16px; border-radius: 10px;
+    background: var(--bg-3); color: var(--text-soft);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font: inherit;
-    font-size: .82rem;
-    cursor: pointer;
-    transition: background .15s ease, border-color .15s ease, transform .15s ease, color .15s ease;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all .2s ease;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
   }
+  .nav-btn:hover { background: var(--accent-soft); color: var(--accent-light); border-color: var(--accent); }
+  .nav-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .nav-btn.primary:hover { background: var(--accent-2); }
+  .nav-btn.danger { background: transparent; color: #ef4444; border-color: rgba(239, 68, 68, .3); }
+  .nav-btn.danger:hover { background: rgba(239, 68, 68, .1); border-color: #ef4444; }
 
-  .tbtn svg { width: 17px; height: 17px; }
-  .tbtn:hover { background: #2b3a52; border-color: #475569; transform: translateY(-1px); }
-  .tbtn:active { transform: translateY(0); }
-  .tbtn[disabled] { opacity: .4; cursor: not-allowed; transform: none; }
-  .tbtn--icon span { display: none; }
-
-  @media (min-width: 760px) { .tbtn--icon span { display: inline; } }
-
-  /* ---------- Layout ---------- */
-  .body {
-    flex: 1;
+  .layout {
     display: grid;
-    grid-template-columns: 330px 1fr;
-    min-height: 0;
+    grid-template-columns: 300px 1fr;
+    height: calc(100vh - 60px);
   }
 
-  /* ---------- Panel izquierdo ---------- */
   .sidebar {
     background: var(--bg-2);
     border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-
-  .tabs {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    border-bottom: 1px solid var(--border);
-    background: #0b1220;
-  }
-
-  .tab {
-    padding: 13px 6px;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-dim);
-    font: inherit;
-    font-size: .8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: color .15s ease, background .15s ease, border-color .15s ease;
-  }
-
-  .tab:hover { color: var(--text); background: rgba(37, 99, 235, .12); }
-
-  .tab.is-active {
-    color: #fff;
-    border-bottom-color: #fff;
-    background: var(--accent);
-  }
-
-  .tabpanes { padding: 10px; overflow: auto; flex: 1; }
-  .tabpane { display: none; animation: fade .2s ease; }
-  .tabpane.is-active { display: block; }
-
-  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-
-  /* Árbol */
-  .tree { list-style: none; margin: 0; padding: 0; }
-
-  .tree__item {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    width: 100%;
-    padding: 9px 11px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--text-soft);
-    font: inherit;
-    font-size: .87rem;
-    text-align: left;
-    cursor: pointer;
-    transition: background .14s ease, border-color .14s ease, color .14s ease;
-  }
-
-  .tree__item:hover { background: var(--bg-3); color: var(--text); }
-
-  .tree__item .ic { color: var(--text-dim); flex-shrink: 0; display: grid; place-items: center; }
-  .tree__item .ic svg { width: 16px; height: 16px; }
-
-  .tree__item.is-active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    font-weight: 600;
-  }
-
-  .tree__item.is-active .ic { color: #fff; }
-
-  .search-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #0b1220;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 9px 11px;
-    margin-bottom: 10px;
-  }
-
-  .search-box svg { width: 16px; height: 16px; color: var(--text-dim); flex-shrink: 0; }
-  .search-box input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font: inherit;
-    font-size: .85rem;
-  }
-  .search-box input::placeholder { color: var(--text-dim); }
-
-  .index-letter {
-    font-size: .72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--accent-light);
-    padding: 14px 11px 6px;
-  }
-
-  .empty {
-    text-align: center;
-    color: var(--text-dim);
-    font-size: .84rem;
-    padding: 40px 16px;
-  }
-  .empty svg { width: 34px; height: 34px; margin-bottom: 10px; opacity: .6; }
-
-  /* ---------- Panel derecho ---------- */
-  .content {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    background:
-      radial-gradient(900px 420px at 100% 0%, rgba(37, 99, 235, .18), transparent 60%),
-      var(--bg);
-  }
-
-  .content__top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    flex-wrap: wrap;
-    padding: 12px 24px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(17, 24, 39, .75);
-  }
-
-  .breadcrumb { font-size: .8rem; color: var(--text-dim); }
-  .breadcrumb b { color: var(--accent-light); font-weight: 600; }
-
-  .feedback-link {
-    font-size: .8rem;
-    color: var(--accent-light);
-    text-decoration: none;
-    border-bottom: 1px dotted var(--accent-light);
-    transition: color .15s ease;
-  }
-  .feedback-link:hover { color: #93c5fd; }
-
-  .content__main { padding: 32px 38px 50px; overflow: auto; flex: 1; }
-
-  .article { max-width: 780px; }
-
-  .article__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding-bottom: 14px;
-    margin-bottom: 26px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .article__title {
-    margin: 0;
-    font-size: 1.9rem;
-    font-weight: 700;
-    letter-spacing: .2px;
-  }
-
-  .fav-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    flex-shrink: 0;
-    padding: 7px 13px;
-    background: var(--bg-3);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    color: var(--text-soft);
-    font: inherit;
-    font-size: .78rem;
-    cursor: pointer;
-    transition: all .15s ease;
-  }
-  .fav-btn svg { width: 15px; height: 15px; }
-  .fav-btn:hover { border-color: #475569; color: var(--text); }
-  .fav-btn.is-on { color: #ffd166; border-color: rgba(255, 209, 102, .5); background: rgba(255, 209, 102, .12); }
-
-  .hero { display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
-
-  .hero__illustration {
-    width: 128px;
-    height: 128px;
-    flex-shrink: 0;
-    border-radius: 20px;
-    display: grid;
-    place-items: center;
-    background:
-      radial-gradient(circle at 30% 25%, rgba(37, 99, 235, .35), transparent 62%),
-      linear-gradient(150deg, #1e293b, #0f172a);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-  }
-  .hero__illustration svg { width: 70px; height: 70px; color: var(--accent-light); }
-
-  .article__text {
-    flex: 1;
-    min-width: 240px;
-    font-size: 1rem;
-    color: #e2e8f0;
-    margin: 0;
-    line-height: 1.85;
-  }
-
-  .article__text p { margin: 0 0 14px; }
-  .article__text p:last-child { margin-bottom: 0; }
-
-  .article__text.is-intro p:first-child::first-letter {
-    font-size: 2.6rem;
-    font-weight: 700;
-    color: var(--accent-light);
-    float: left;
-    line-height: .9;
-    padding: 4px 10px 0 0;
-  }
-
-  /* ---------- Modal de impresión ---------- */
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(2, 6, 16, .7);
-    backdrop-filter: blur(2px);
-    display: none;
-    place-items: center;
-    z-index: 100;
-    padding: 20px;
-  }
-  .modal-backdrop.is-open { display: grid; }
-
-  .modal {
-    width: min(470px, 94vw);
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    box-shadow: var(--shadow);
+    display: flex; flex-direction: column;
     overflow: hidden;
-    animation: pop .18s ease;
   }
-  @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
-
-  .modal__head {
+  .sidebar-tabs {
     display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 16px 20px;
-    background: var(--panel-2);
     border-bottom: 1px solid var(--border);
   }
-  .modal__head svg { width: 20px; height: 20px; color: var(--accent-light); }
-  .modal__head h2 { margin: 0; font-size: 1.02rem; font-weight: 700; }
+  .sidebar-tab {
+    flex: 1; padding: 12px 8px;
+    background: transparent; border: none;
+    color: var(--text-dim); font-size: 11px; font-weight: 600;
+    cursor: pointer; text-transform: uppercase; letter-spacing: .5px;
+    transition: all .2s ease;
+    border-bottom: 2px solid transparent;
+  }
+  .sidebar-tab:hover { color: var(--text-soft); }
+  .sidebar-tab.active { color: var(--accent-light); border-bottom-color: var(--accent); }
 
-  .modal__body { padding: 18px 20px; display: grid; gap: 10px; }
-
-  .opt {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 13px 15px;
-    border: 1px solid var(--border);
+  .sidebar-search {
+    padding: 14px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .sidebar-search input {
+    width: 100%; padding: 10px 14px;
     border-radius: 10px;
-    background: var(--bg-3);
-    cursor: pointer;
-    font-size: .88rem;
-    transition: border-color .15s ease, background .15s ease;
-  }
-  .opt:hover { border-color: #475569; }
-  .opt input { accent-color: var(--accent); width: 17px; height: 17px; flex-shrink: 0; }
-  .opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
-
-  .modal__foot {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding: 14px 20px;
-    border-top: 1px solid var(--border);
-    background: var(--bg-2);
-  }
-
-  .btn {
-    padding: 9px 20px;
-    border-radius: 8px;
-    font: inherit;
-    font-size: .85rem;
-    font-weight: 600;
-    cursor: pointer;
+    background: var(--bg-3); color: var(--text);
     border: 1px solid var(--border);
-    background: var(--bg-3);
-    color: var(--text);
-    transition: all .15s ease;
+    font-size: 13px; outline: none;
   }
-  .btn:hover { background: #2b3a52; }
-  .btn--primary {
-    background: linear-gradient(140deg, var(--accent), var(--accent-2));
-    border-color: transparent;
-    color: #fff;
-  }
-  .btn--primary:hover { filter: brightness(1.1); }
+  .sidebar-search input:focus { border-color: var(--accent); }
 
-  /* ---------- Responsive ---------- */
-  @media (max-width: 900px) {
-    .body { grid-template-columns: 1fr; }
-    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
-    .tabpanes { max-height: 330px; }
+  .sidebar-content {
+    flex: 1; overflow-y: auto; padding: 14px;
   }
+  .sidebar-content::-webkit-scrollbar { width: 6px; }
+  .sidebar-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-  @media (max-width: 620px) {
-    .toolbar__name span { display: none; }
-    .content__main { padding: 22px 18px 36px; }
-    .content__top { padding: 10px 16px; }
-    .article__title { font-size: 1.5rem; }
-    .hero__illustration { width: 104px; height: 104px; }
-    .hero__illustration svg { width: 56px; height: 56px; }
+  .topic-item {
+    padding: 10px 12px; margin-bottom: 4px;
+    border-radius: 10px; cursor: pointer;
+    font-size: 13px; color: var(--text-soft);
+    transition: all .2s ease;
+    border-left: 3px solid transparent;
+  }
+  .topic-item:hover { background: var(--bg-3); }
+  .topic-item.active {
+    background: var(--accent-soft); color: var(--accent-light);
+    border-left-color: var(--accent);
+  }
+  .topic-item .topic-icon { margin-right: 8px; }
+
+  .content-area {
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    padding: 24px 32px;
+  }
+  .content-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .content-nav {
+    display: flex; gap: 8px;
+  }
+  .content-nav .btn {
+    padding: 8px 14px; border-radius: 8px;
+    background: var(--bg-3); color: var(--text-soft);
+    border: 1px solid var(--border);
+    font-size: 12px; cursor: pointer;
+    transition: all .2s ease;
+  }
+  .content-nav .btn:hover { background: var(--accent-soft); color: var(--accent-light); }
+
+  .content-body {
+    flex: 1; overflow-y: auto;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  .content-body::-webkit-scrollbar { width: 8px; }
+  .content-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .article-title {
+    font-size: 24px; font-weight: 700; color: var(--text);
+    margin-bottom: 16px;
+  }
+  .article-meta {
+    font-size: 12px; color: var(--text-dim);
+    margin-bottom: 24px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .article-body h3 {
+    font-size: 16px; font-weight: 700; color: var(--accent-light);
+    margin: 20px 0 10px;
+  }
+  .article-body p {
+    font-size: 14px; line-height: 1.7; color: var(--text-soft);
+    margin-bottom: 12px;
+  }
+  .article-body ul, .article-body ol {
+    margin: 10px 0 12px 24px; color: var(--text-soft);
+    font-size: 14px; line-height: 1.7;
+  }
+  .article-body li { margin-bottom: 6px; }
+
+  .callout {
+    padding: 14px 18px; border-radius: 10px;
+    margin: 16px 0; font-size: 13px;
+    border-left: 4px solid;
+  }
+  .callout-info { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-light); }
+  .callout-warn { background: rgba(245, 158, 11, .1); border-color: var(--warn); color: var(--warn); }
+
+  .shortcut-hint {
+    position: fixed; bottom: 16px; right: 16px;
+    padding: 8px 14px; border-radius: 8px;
+    background: var(--bg-3); border: 1px solid var(--border);
+    font-size: 11px; color: var(--text-dim);
+  }
+  kbd {
+    padding: 2px 6px; border-radius: 4px;
+    background: var(--bg); border: 1px solid var(--border);
+    font-size: 10px; font-family: inherit; color: var(--text-soft);
   }
 </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- ---------- Toolbar ---------- -->
-  <header class="toolbar">
-    <div class="toolbar__brand">
-      <div class="toolbar__mark">M9</div>
-      <div class="toolbar__name">Manual de Usuario<span>Software de negocios Monica</span></div>
-    </div>
-
-    <div class="toolbar__actions">
-      <button class="tbtn tbtn--icon" type="button" title="Ocultar panel de navegación" data-action="hide">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 10l-2 2 2 2"/>
-        </svg>
-        <span>Ocultar</span>
-      </button>
-
-      <button class="tbtn tbtn--icon" type="button" title="Atrás" id="navBack">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
-        </svg>
-        <span>Atrás</span>
-      </button>
-
-      <button class="tbtn tbtn--icon" type="button" title="Adelante" id="navNext">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
-        </svg>
-        <span>Adelante</span>
-      </button>
-
-      <button class="tbtn tbtn--icon" type="button" title="Imprimir" id="printBtn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/>
-        </svg>
-        <span>Imprimir</span>
-      </button>
-
-      <button class="tbtn tbtn--icon" type="button" title="Opciones" data-action="options">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </svg>
-        <span>Opciones</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- ---------- Cuerpo ---------- -->
-  <div class="body">
-
-    <!-- Panel izquierdo -->
-    <aside class="sidebar" id="sidebar">
-      <div class="tabs" role="tablist">
-        <button class="tab is-active" type="button" role="tab" data-tab="contenido">Contenido</button>
-        <button class="tab" type="button" role="tab" data-tab="indice">Índice</button>
-        <button class="tab" type="button" role="tab" data-tab="buscar">Buscar</button>
-        <button class="tab" type="button" role="tab" data-tab="favoritos">Favoritos</button>
-      </div>
-
-      <div class="tabpanes">
-
-        <!-- Contenido -->
-        <div class="tabpane is-active" data-pane="contenido">
-          <ul class="tree" id="treeContent"></ul>
-        </div>
-
-        <!-- Índice -->
-        <div class="tabpane" data-pane="indice">
-          <div id="indexList"></div>
-        </div>
-
-        <!-- Buscar -->
-        <div class="tabpane" data-pane="buscar">
-          <div class="search-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-            <input type="search" id="searchInput" placeholder="Escriba para buscar…" aria-label="Buscar en el manual" />
-          </div>
-          <ul class="tree" id="searchResults"></ul>
-        </div>
-
-        <!-- Favoritos -->
-        <div class="tabpane" data-pane="favoritos">
-          <ul class="tree" id="favList"></ul>
-        </div>
-
-      </div>
-    </aside>
-
-    <!-- Panel derecho -->
-    <main class="content">
-      <div class="content__top">
-        <div class="breadcrumb">Índice: <b>&lt;Root level&gt;</b></div>
-        <a class="feedback-link" href="#" id="feedback">Enviar comentarios sobre este tema.</a>
-      </div>
-
-      <div class="content__main">
-        <article class="article">
-          <div class="article__head">
-            <h1 class="article__title" id="topic-title">Introducción</h1>
-            <button class="fav-btn" type="button" id="favBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z"/></svg>
-              <span id="favLabel">Agregar a favoritos</span>
-            </button>
-          </div>
-
-          <div class="hero">
-            <div class="hero__illustration" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                <path d="M9 7h7M9 11h7M9 15h4"/>
-              </svg>
-            </div>
-            <div class="article__text" id="topic-text"></div>
-          </div>
-        </article>
-      </div>
-    </main>
-
+<nav class="topbar">
+  <div class="topbar-left">
+    <h1>Manual de Usuario</h1>
+    <span class="badge">Documentación</span>
   </div>
+  <div class="topbar-right">
+    <a class="nav-btn" href="index.html">Inicio</a>
+    <a class="nav-btn" href="modulo_parametros.html">Parámetros</a>
+    <a class="nav-btn danger" href="#" onclick="window.close(); return false;">Salir</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" data-tab="temas">Temas</button>
+      <button class="sidebar-tab" data-tab="buscar">Buscar</button>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" placeholder="Buscar en el manual..." id="searchInput">
+    </div>
+    <div class="sidebar-content" id="topicList">
+      <div class="topic-item active" data-topic="intro">
+        <span class="topic-icon">&#128640;</span>Introducción
+      </div>
+      <div class="topic-item" data-topic="facturacion">
+        <span class="topic-icon">&#128179;</span>Facturación
+      </div>
+      <div class="topic-item" data-topic="inventario">
+        <span class="topic-icon">&#128230;</span>Inventario
+      </div>
+      <div class="topic-item" data-topic="reportes">
+        <span class="topic-icon">&#128202;</span>Reportes
+      </div>
+      <div class="topic-item" data-topic="parametros">
+        <span class="topic-icon">&#9881;</span>Parámetros
+      </div>
+      <div class="topic-item" data-topic="usuarios">
+        <span class="topic-icon">&#128101;</span>Usuarios y Roles
+      </div>
+    </div>
+  </aside>
+
+  <main class="content-area">
+    <div class="content-header">
+      <div class="content-nav">
+        <button class="btn" id="prevBtn">&#8592; Anterior</button>
+        <button class="btn" id="nextBtn">Siguiente &#8594;</button>
+      </div>
+      <div class="content-nav">
+        <button class="btn" onclick="window.print()">Imprimir</button>
+      </div>
+    </div>
+    <div class="content-body">
+      <h2 class="article-title" id="articleTitle">Introducción</h2>
+      <div class="article-meta" id="articleMeta">Última actualización: Octubre 2026 &middot; 3 min lectura</div>
+      <div class="article-body" id="articleBody">
+        <h3>Bienvenido a Monica-23</h3>
+        <p>Monica-23 es un sistema integral de gestión empresarial diseñado para administrar facturación, inventario, reportes y configuración de usuarios en un único entorno de trabajo.</p>
+        <div class="callout callout-info">
+          <strong>Consejo:</strong> Use el índice lateral para navegar por los diferentes temas del manual. La búsqueda le permite encontrar rápidamente cualquier sección.
+        </div>
+        <h3>Requisitos del Sistema</h3>
+        <ul>
+          <li>Windows 10 o superior</li>
+          <li>4 GB de RAM mínimo (8 GB recomendado)</li>
+          <li>Conexión a internet para actualizaciones</li>
+        </ul>
+        <h3>Estructura del Manual</h3>
+        <p>Este manual está organizado en seis secciones principales que cubren todas las funcionalidades del sistema. Cada sección incluye instrucciones paso a paso y capturas de pantalla de referencia.</p>
+        <div class="callout callout-warn">
+          <strong>Importante:</strong> Algunos módulos requieren permisos de administrador. Consulte con el administrador del sistema si no tiene acceso a ciertas funciones.
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
 
-<!-- ---------- Modal de impresión ---------- -->
-<div class="modal-backdrop" id="printModal">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="printTitle">
-    <div class="modal__head">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/>
-      </svg>
-      <h2 id="printTitle">Imprimir temas</h2>
-    </div>
-    <div class="modal__body">
-      <label class="opt">
-        <input type="radio" name="printScope" value="selected" checked />
-        Imprimir el tema seleccionado
-      </label>
-      <label class="opt">
-        <input type="radio" name="printScope" value="heading" />
-        Imprimir el encabezado seleccionado y todos sus subtemas
-      </label>
-    </div>
-    <div class="modal__foot">
-      <button class="btn" type="button" id="printCancel">Cancelar</button>
-      <button class="btn btn--primary" type="button" id="printAccept">Aceptar</button>
-    </div>
-  </div>
-</div>
+<div class="shortcut-hint">Presiona <kbd>Esc</kbd> para salir</div>
 
 <script>
-  /* ---------- Contenido de cada tema ---------- */
-  const TOPICS = {
-    "Introducción": {
-      intro: true,
-      text: [
-        "Gracias por haber preferido a MONICA, para Windows, como su asistente en los negocios. Le permitirá resolver muchos de las tareas asociadas con un negocio pequeño ó mediano. MONICA ha sido diseñada para servirle de una manera fácil y rápida, pero a la vez dándole la información lo mas detalladamente posible."
-      ]
+  const topics = {
+    intro: {
+      title: 'Introducción',
+      meta: 'Última actualización: Octubre 2026 · 3 min lectura',
+      body: `
+        <h3>Bienvenido a Monica-23</h3>
+        <p>Monica-23 es un sistema integral de gestión empresarial diseñado para administrar facturación, inventario, reportes y configuración de usuarios en un único entorno de trabajo.</p>
+        <div class="callout callout-info"><strong>Consejo:</strong> Use el índice lateral para navegar por los diferentes temas del manual.</div>
+        <h3>Requisitos del Sistema</h3>
+        <ul><li>Windows 10 o superior</li><li>4 GB de RAM mínimo (8 GB recomendado)</li><li>Conexión a internet para actualizaciones</li></ul>
+        <h3>Estructura del Manual</h3>
+        <p>Este manual está organizado en seis secciones principales que cubren todas las funcionalidades del sistema.</p>
+        <div class="callout callout-warn"><strong>Importante:</strong> Algunos módulos requieren permisos de administrador.</div>
+      `
     },
-    "Licencia de usuario final": {
-      text: [
-        "El presente contrato de licencia de usuario final describe las condiciones bajo las cuales se le concede el derecho de uso del software MONICA para Windows.",
-        "La licencia es personal e intransferible. No está permitida la copia, distribución o modificación del programa sin la autorización expresa del fabricante. Al instalar el producto usted acepta los términos aquí descritos."
-      ]
+    facturacion: {
+      title: 'Facturación',
+      meta: 'Última actualización: Octubre 2026 · 5 min lectura',
+      body: `
+        <h3>Crear una Factura</h3>
+        <p>Para crear una nueva factura, acceda al módulo de Facturación desde el menú principal. Seleccione "Nueva Factura" y complete los datos del cliente, los productos o servicios, y las condiciones de pago.</p>
+        <h3>Estados de Factura</h3>
+        <ul><li><strong>Borrador:</strong> Factura en edición, aún no emitida</li><li><strong>Emitida:</strong> Factura válida y contabilizada</li><li><strong>Pagada:</strong> Factura con pago registrado</li><li><strong>Anulada:</strong> Factura cancelada (requiere justificación)</li></ul>
+        <div class="callout callout-info"><strong>Nota:</strong> Las facturas emitidas no pueden editarse. Debe anularlas y crear una nueva si es necesario.</div>
+      `
     },
-    "Como comprar el producto": {
-      text: [
-        "Para adquirir MONICA puede comunicarse con nuestros distribuidores autorizados o con el área comercial. Se le ofrecerán las distintas ediciones y modalidades de licencia según las necesidades de su negocio.",
-        "El producto incluye el programa, su documentación y el soporte técnico correspondiente al plan adquirido."
-      ]
+    inventario: {
+      title: 'Inventario',
+      meta: 'Última actualización: Octubre 2026 · 4 min lectura',
+      body: `
+        <h3>Gestión de Productos</h3>
+        <p>El módulo de inventario permite administrar el catálogo de productos, existencias, precios y categorías. Puede importar productos masivamente desde archivos CSV.</p>
+        <h3>Control de Stock</h3>
+        <p>Configure alertas de stock mínimo para recibir notificaciones cuando las existencias alcancen niveles críticos.</p>
+        <div class="callout callout-warn"><strong>Atención:</strong> Las eliminaciones de productos son permanentes. Verifique antes de proceder.</div>
+      `
     },
-    "Videos disponibles": {
-      text: [
-        "MONICA pone a su disposición una serie de videos tutoriales que muestran paso a paso el uso de cada módulo del sistema.",
-        "Se recomienda revisar los videos introductorios antes de comenzar a operar, para familiarizarse con la navegación y los conceptos básicos."
-      ]
+    reportes: {
+      title: 'Reportes',
+      meta: 'Última actualización: Octubre 2026 · 6 min lectura',
+      body: `
+        <h3>Reportes Disponibles</h3>
+        <p>El sistema incluye reportes de ventas, compras, inventario, cartera y resultados financieros. Todos pueden exportarse a PDF o Excel.</p>
+        <h3>Programar Reportes</h3>
+        <p>Configure reportes automáticos para ser enviados por correo electrónico en la frecuencia deseada (diaria, semanal, mensual).</p>
+        <div class="callout callout-info"><strong>Sugerencia:</strong> Los reportes personalizados se guardan en "Mis reportes" para acceso rápido.</div>
+      `
     },
-    "Adiciones a esta versión": {
-      text: [
-        "Esta versión incorpora mejoras en el desempeño general del sistema, nuevos reportes y ajustes en los módulos de facturación e inventario.",
-        "Consulte la lista completa de cambios para conocer todas las funcionalidades añadidas y corregidas en esta liberación."
-      ]
+    parametros: {
+      title: 'Parámetros',
+      meta: 'Última actualización: Octubre 2026 · 4 min lectura',
+      body: `
+        <h3>Configuración General</h3>
+        <p>El módulo de parámetros permite personalizar el sistema según las necesidades de la empresa: datos de la empresa, moneda, impuestos, formatos de impresión y más.</p>
+        <h3>Accesos y Seguridad</h3>
+        <p>Configure roles de usuario, permisos por módulo y políticas de contraseñas para mantener la seguridad de la información.</p>
+        <div class="callout callout-warn"><strong>Importante:</strong> Los cambios en parámetros pueden afectar el funcionamiento del sistema. Documente cualquier modificación.</div>
+      `
     },
-    "Instalación": {
-      text: [
-        "El proceso de instalación de MONICA es sencillo y guiado. Inserte el medio de instalación o ejecute el archivo descargado y siga las instrucciones que aparecerán en pantalla.",
-        "Antes de comenzar, verifique que su equipo cumpla con los requisitos mínimos del sistema y cierre cualquier otra aplicación en ejecución."
-      ]
-    },
-    "Monica": {
-      text: [
-        "MONICA es un software de negocios diseñado para la administración de pequeños y medianos comercios. Integra facturación, inventario, cuentas por cobrar y contabilidad en un mismo entorno.",
-        "Cada módulo se complementa con los demás, de modo que la información registrada fluye de forma consistente a lo largo de todo el sistema."
-      ]
-    },
-    "Soporte técnico": {
-      text: [
-        "Si presenta dificultades con el uso del programa, puede contactar a nuestro equipo de soporte técnico. Tenga a mano el número de licencia y la descripción del problema.",
-        "El soporte está disponible por teléfono y correo electrónico en los horarios establecidos por el fabricante."
-      ]
+    usuarios: {
+      title: 'Usuarios y Roles',
+      meta: 'Última actualización: Octubre 2026 · 3 min lectura',
+      body: `
+        <h3>Crear Usuarios</h3>
+        <p>Desde el módulo de parámetros puede crear nuevos usuarios asignando un rol predefinido o personalizando permisos individuales por módulo.</p>
+        <h3>Roles Predefinidos</h3>
+        <ul><li><strong>Administrador:</strong> Acceso total al sistema</li><li><strong>Vendedor:</strong> Facturación y consulta de inventario</li><li><strong>Contador:</strong> Reportes y facturación</li><li><strong>Solo lectura:</strong> Consulta sin capacidad de modificación</li></ul>
+        <div class="callout callout-info"><strong>Recomendación:</strong> Asigne siempre el rol mínimo necesario para cada usuario.</div>
+      `
     }
   };
 
-  /* ---------- Elementos ---------- */
-  const titleEl = document.getElementById("topic-title");
-  const textEl = document.getElementById("topic-text");
-  const treeContent = document.getElementById("treeContent");
-  const indexList = document.getElementById("indexList");
-  const searchInput = document.getElementById("searchInput");
-  const searchResults = document.getElementById("searchResults");
-  const favList = document.getElementById("favList");
-  const favBtn = document.getElementById("favBtn");
-  const favLabel = document.getElementById("favLabel");
+  const topicList = document.getElementById('topicList');
+  const articleTitle = document.getElementById('articleTitle');
+  const articleMeta = document.getElementById('articleMeta');
+  const articleBody = document.getElementById('articleBody');
+  const searchInput = document.getElementById('searchInput');
+  let currentTopic = 'intro';
 
-  const bookIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
-  const chevronIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
-
-  const treeOrder = [
-    "Introducción",
-    "Licencia de usuario final",
-    "Como comprar el producto",
-    "Videos disponibles",
-    "Adiciones a esta versión",
-    "Instalación",
-    "Monica",
-    "Soporte técnico",
-    "Adiciones a esta versión"
-  ];
-
-  let current = "Introducción";
-  const history = ["Introducción"];
-  let histIndex = 0;
-  const favorites = new Set();
-
-  /* ---------- Render del árbol / índice ---------- */
-  function renderTree() {
-    treeContent.innerHTML = treeOrder.map((key) => (
-      '<li><button class="tree__item" type="button" data-topic="' + key + '">' +
-      '<span class="ic">' + bookIcon + "</span>" + key + "</button></li>"
-    )).join("");
-  }
-
-  function renderIndex() {
-    const sorted = [...new Set(treeOrder)].sort((a, b) => a.localeCompare(b, "es"));
-    const groups = {};
-    sorted.forEach((key) => {
-      const letter = key.charAt(0).toUpperCase();
-      (groups[letter] = groups[letter] || []).push(key);
-    });
-    indexList.innerHTML = Object.keys(groups).sort().map((letter) => (
-      '<div class="index-letter">' + letter + "</div><ul class=\"tree\">" +
-      groups[letter].map((key) =>
-        '<li><button class="tree__item" type="button" data-topic="' + key + '">' +
-        '<span class="ic">' + chevronIcon + "</span>" + key + "</button></li>"
-      ).join("") + "</ul>"
-    )).join("");
-  }
-
-  /* ---------- Render de favoritos ---------- */
-  function renderFavorites() {
-    if (favorites.size === 0) {
-      favList.innerHTML = '<div class="empty">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z"/></svg>' +
-        "<div>Aún no tiene temas marcados como favoritos.</div></div>";
-      return;
-    }
-    favList.innerHTML = [...favorites].map((key) =>
-      '<li><button class="tree__item" type="button" data-topic="' + key + '">' +
-      '<span class="ic">' + bookIcon + "</span>" + key + "</button></li>"
-    ).join("");
-  }
-
-  /* ---------- Selección de tema ---------- */
-  function markActive(key) {
-    document.querySelectorAll(".tree__item").forEach((n) => {
-      n.classList.toggle("is-active", n.dataset.topic === key);
+  function loadTopic(topicId) {
+    const topic = topics[topicId];
+    if (!topic) return;
+    currentTopic = topicId;
+    articleTitle.textContent = topic.title;
+    articleMeta.textContent = topic.meta;
+    articleBody.innerHTML = topic.body;
+    document.querySelectorAll('.topic-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.topic === topicId);
     });
   }
 
-  function updateFavButton() {
-    const on = favorites.has(current);
-    favBtn.classList.toggle("is-on", on);
-    favLabel.textContent = on ? "En favoritos" : "Agregar a favoritos";
-  }
+  topicList.addEventListener('click', (e) => {
+    const item = e.target.closest('.topic-item');
+    if (item) loadTopic(item.dataset.topic);
+  });
 
-  function selectTopic(key, pushHistory = true) {
-    if (!TOPICS[key]) return;
-    current = key;
-    const topic = TOPICS[key];
-
-    titleEl.textContent = key;
-    textEl.innerHTML = topic.text.map((p) => "<p>" + p + "</p>").join("");
-    textEl.classList.toggle("is-intro", !!topic.intro);
-
-    markActive(key);
-    updateFavButton();
-
-    if (pushHistory && history[histIndex] !== key) {
-      history.splice(histIndex + 1);
-      history.push(key);
-      histIndex = history.length - 1;
-    }
-    updateNavButtons();
-  }
-
-  /* ---------- Pestañas ---------- */
-  document.querySelectorAll(".tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("is-active"));
-      document.querySelectorAll(".tabpane").forEach((p) => p.classList.remove("is-active"));
-      tab.classList.add("is-active");
-      const pane = document.querySelector('[data-pane="' + tab.dataset.tab + '"]');
-      if (pane) pane.classList.add("is-active");
+  searchInput.addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll('.topic-item').forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = text.includes(q) ? 'block' : 'none';
     });
   });
 
-  /* ---------- Delegación de clics en listas ---------- */
-  document.addEventListener("click", (e) => {
-    const item = e.target.closest(".tree__item");
-    if (item) selectTopic(item.dataset.topic);
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    const keys = Object.keys(topics);
+    const idx = keys.indexOf(currentTopic);
+    if (idx > 0) loadTopic(keys[idx - 1]);
   });
 
-  /* ---------- Buscador ---------- */
-  searchInput.addEventListener("input", () => {
-    const q = searchInput.value.trim().toLowerCase();
-    const keys = [...new Set(treeOrder)];
-    if (!q) {
-      searchResults.innerHTML = "";
-      return;
-    }
-    const hits = keys.filter((k) => k.toLowerCase().includes(q));
-    searchResults.innerHTML = hits.length
-      ? hits.map((key) =>
-          '<li><button class="tree__item" type="button" data-topic="' + key + '">' +
-          '<span class="ic">' + chevronIcon + "</span>" + key + "</button></li>"
-        ).join("")
-      : '<div class="empty">Sin resultados para “' + searchInput.value + "”.</div>";
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    const keys = Object.keys(topics);
+    const idx = keys.indexOf(currentTopic);
+    if (idx < keys.length - 1) loadTopic(keys[idx + 1]);
   });
 
-  /* ---------- Favoritos ---------- */
-  favBtn.addEventListener("click", () => {
-    if (favorites.has(current)) favorites.delete(current);
-    else favorites.add(current);
-    updateFavButton();
-    renderFavorites();
-  });
-
-  /* ---------- Navegación atrás / adelante ---------- */
-  const navBack = document.getElementById("navBack");
-  const navNext = document.getElementById("navNext");
-
-  function updateNavButtons() {
-    navBack.disabled = histIndex <= 0;
-    navNext.disabled = histIndex >= history.length - 1;
-  }
-
-  navBack.addEventListener("click", () => {
-    if (histIndex > 0) {
-      histIndex--;
-      selectTopic(history[histIndex], false);
-    }
-  });
-
-  navNext.addEventListener("click", () => {
-    if (histIndex < history.length - 1) {
-      histIndex++;
-      selectTopic(history[histIndex], false);
-    }
-  });
-
-  /* ---------- Acciones de la toolbar ---------- */
-  document.querySelectorAll("[data-action]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      if (btn.dataset.action === "hide") {
-        const sb = document.getElementById("sidebar");
-        sb.style.display = sb.style.display === "none" ? "" : "none";
-      }
+  document.querySelectorAll('.sidebar-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
     });
   });
 
-  /* ---------- Modal de impresión ---------- */
-  const printModal = document.getElementById("printModal");
-  const printBtn = document.getElementById("printBtn");
-  const printCancel = document.getElementById("printCancel");
-  const printAccept = document.getElementById("printAccept");
-
-  function openPrintModal() { printModal.classList.add("is-open"); }
-  function closePrintModal() { printModal.classList.remove("is-open"); }
-
-  printBtn.addEventListener("click", openPrintModal);
-  printCancel.addEventListener("click", closePrintModal);
-  printAccept.addEventListener("click", () => {
-    closePrintModal();
-    window.print();
-  });
-  printModal.addEventListener("click", (e) => {
-    if (e.target === printModal) closePrintModal();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && printModal.classList.contains("is-open")) closePrintModal();
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      window.close();
+    }
+    if (e.altKey && e.key === 'ArrowLeft') {
+      const keys = Object.keys(topics);
+      const idx = keys.indexOf(currentTopic);
+      if (idx > 0) loadTopic(keys[idx - 1]);
+    }
+    if (e.altKey && e.key === 'ArrowRight') {
+      const keys = Object.keys(topics);
+      const idx = keys.indexOf(currentTopic);
+      if (idx < keys.length - 1) loadTopic(keys[idx + 1]);
+    }
   });
 
-  /* ---------- Init ---------- */
-  renderTree();
-  renderIndex();
-  renderFavorites();
-  selectTopic("Introducción", false);
+  loadTopic('intro');
 </script>
+
 </body>
 </html>
