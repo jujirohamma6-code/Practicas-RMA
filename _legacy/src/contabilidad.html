@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contabilidad - Mónica Gestión</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+
+  <div class="panel-container">
+    <div class="header-flex">
+      <h1>Contabilidad</h1>
+      <button id="btn-menu">← Menú Principal</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nro. Asiento</th>
+          <th>Fecha</th>
+          <th>Libro</th>
+          <th>Dcmto.</th>
+          <th>Cuenta</th>
+          <th>Descripción / Nombre</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>11/04/2026</td>
+          <td>DIA</td>
+          <td>ASIE</td>
+          <td>1101</td>
+          <td>Caja General</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="actions-bar">
+      <button class="btn-action" id="btn-crear-asiento">Crear Asiento</button>
+      <button class="btn-action">Modificar Asto.</button>
+      <button class="btn-action">Anular Asto.</button>
+      <button class="btn-action" style="color: #888;" disabled>Eliminar Asto.</button>
+    </div>
+  </div>
+
+  <script src="../modules/utils.js"></script>
+  <script src="../modules/contabilidad.js"></script>
+</body>
+</html>

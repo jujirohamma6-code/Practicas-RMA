@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuentas Corrientes - Mónica Gestión</title>
+  <link rel="stylesheet" href="../assets/styles.css">
+</head>
+<body>
+
+  <!-- Barra Superior con Botón de Regreso -->
+  <div class="header-bar">
+    <h2>Cuentas Corrientes / Chequera</h2>
+    <button class="btn-regresar" id="btn-menu">← Menú Principal</button>
+  </div>
+
+  <!-- Panel Principal del Módulo -->
+  <div class="panel-container">
+    <h3>Registro de Movimientos de Cuenta</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Nro. Cheque / Dcmto.</th>
+          <th>Fecha</th>
+          <th>Beneficiario / Concepto</th>
+          <th>Monto</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-chequera">
+        <tr>
+          <td>CHK-001</td>
+          <td>12/10/2026</td>
+          <td>Pago de Servicios Básicos</td>
+          <td>$250.00</td>
+          <td>Cobrado</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="actions-bar">
+      <button class="btn-action" id="btn-crear-cheque">Crear Cheque</button>
+      <button class="btn-action">Modificar</button>
+      <button class="btn-action">Anular Cheque</button>
+    </div>
+  </div>
+
+  <script src="../modules/utils.js"></script>
+  <script src="../modules/monica-chequera.js"></script>
+</body>
+</html>
