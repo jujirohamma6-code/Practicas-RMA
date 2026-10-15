@@ -98,6 +98,12 @@
   .flabel{font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
   .fld{background:#fff;border:1px solid var(--line);border-radius:5px;padding:6px 9px;font:inherit;font-size:12px;color:var(--text);min-width:150px}
   .fld:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,125,255,.18)}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
   .radios{display:flex;gap:14px;padding-bottom:4px}
   .radio{display:flex;align-items:center;gap:6px;font-size:12px;color:#33475f;cursor:pointer}
 
@@ -174,9 +180,6 @@
       <span class="sb"><span class="dot"></span><span id="status">Listo</span></span>
       <span class="sb" id="tc">Tipo de cambio: US$ 1 = C$ 19.960</span>
       <span class="sb" id="clock"></span>
-      <div style="margin-left:auto">
-        <a class="sb" href="cuentas_por_cobrar.html" style="color:var(--accent); text-decoration:none; padding:3px 6px; border-radius:4px; background:rgba(245,158,11,.15); margin-left:8px">CxC →</a>
-      </div>
     </div>
   </div>
   <div class="taskbar">
@@ -670,12 +673,67 @@ function chartsUI(){
     '<div class="fgroup"><label class="flabel">Presentación</label><div class="radios">'+
       '<label class="radio"><input type="radio" name="ch-tipo" value="line" checked> Lineal</label>'+
       '<label class="radio"><input type="radio" name="ch-tipo" value="bar"> Barras</label></div></div>'+
-    '<div style="display:flex;gap:8px"><button class="btn" id="ch-color">Cambiar color</button></div>'+
+    '<div style="display:flex;gap:8px"><button class="btn" id="btn-cambiar-color" onclick="cambiarColorGraficos()">Cambiar color</button></div>'+
     '<span class="val" style="margin-left:auto;color:#33475f">Tasa oficial: US$ 1 = C$ 19.960</span></div>'+
     '<div class="charts-grid">'+ card('valor')+card('total')+card('devol')+card('orden') +'</div>';
 }
-const chartColors = { series:{}, grid:'#e3e9f3', axis:'#93a6c2', text:'#5a6b85' };
+const chartColors = { series:{}, fill:{}, grid:'#e3e9f3', axis:'#93a6c2', text:'#5a6b85' };
 const colorOf = k => chartColors.series[k] || VENDEDOR[k];
+
+/* ---------- Paletas de color para la pestaña Gráficos ---------- */
+const PALETAS_GRAFICOS = [
+  {
+    nombre: 'Azul clásico',
+    grid: '#e3e9f3', axis: '#93a6c2',
+    series: {
+      valor: { borderColor: '#2f7dff', backgroundColor: 'rgba(47,125,255,0.18)' },
+      total: { borderColor: '#1f9e63', backgroundColor: 'rgba(31,158,99,0.18)' },
+      devol: { borderColor: '#b8860b', backgroundColor: 'rgba(184,134,11,0.18)' },
+      orden: { borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.18)' }
+    }
+  },
+  {
+    nombre: 'Corporativo',
+    grid: '#e6e8eb', axis: '#9aa5b1',
+    series: {
+      valor: { borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,0.18)' },
+      total: { borderColor: '#0369a1', backgroundColor: 'rgba(3,105,161,0.18)' },
+      devol: { borderColor: '#c0392b', backgroundColor: 'rgba(192,57,43,0.18)' },
+      orden: { borderColor: '#c2710c', backgroundColor: 'rgba(194,113,12,0.18)' }
+    }
+  },
+  {
+    nombre: 'Océano',
+    grid: '#e2eef5', axis: '#7fa8c0',
+    series: {
+      valor: { borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,0.16)' },
+      total: { borderColor: '#0891b2', backgroundColor: 'rgba(8,145,178,0.16)' },
+      devol: { borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.16)' },
+      orden: { borderColor: '#db2777', backgroundColor: 'rgba(219,39,119,0.16)' }
+    }
+  }
+];
+let indicePaletaGraficos = -1;
+
+function aplicarPaletaGraficos(pal){
+  if(!pal) return;
+  if(pal.grid) chartColors.grid = pal.grid;
+  if(pal.axis) chartColors.axis = pal.axis;
+  ['valor','total','devol','orden'].forEach(function(k){
+    const s = pal.series && pal.series[k];
+    if(!s) return;
+    chartColors.series[k] = s.borderColor;
+    chartColors.fill[k] = s.backgroundColor;
+  });
+}
+
+function cambiarColorGraficos(){
+  indicePaletaGraficos = (indicePaletaGraficos + 1) % PALETAS_GRAFICOS.length;
+  const pal = PALETAS_GRAFICOS[indicePaletaGraficos];
+  aplicarPaletaGraficos(pal);
+  drawAllCharts();
+  if(typeof toast === 'function') toast('Paleta de gráficos: ' + pal.nombre);
+}
 function mcount(){ const v=$('ch-al')?$('ch-al').value:iso(HOY); const d=v?new Date(v+'T00:00:00'):HOY; return Math.max(1,Math.min(12,d.getMonth()+1)); }
 function chartType(){ const r=document.querySelector('input[name="ch-tipo"]:checked'); return r?r.value:'line'; }
 function svgChart(key, type){
@@ -692,12 +750,14 @@ function svgChart(key, type){
   s+='<line x1="'+pad.l+'" y1="'+pad.t+'" x2="'+pad.l+'" y2="'+(pad.t+ph)+'" stroke="'+chartColors.axis+'"/>';
   s+='<line x1="'+pad.l+'" y1="'+(pad.t+ph)+'" x2="'+(W-pad.r)+'" y2="'+(pad.t+ph)+'" stroke="'+chartColors.axis+'"/>';
   const col=colorOf(key);
+  const fillCol=chartColors.fill[key] || col;
+  const fillOpacity=chartColors.fill[key] ? '' : ' opacity="0.12"';
   if(type==='bar'){
     data.forEach((v,i)=>{ const bx=pad.l+(pw/n)*i+((pw/n)-bw)/2, by=Y(v);
-      s+='<rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+(pad.t+ph-by)+'" rx="2" fill="'+col+'"><title>'+labels[i]+': '+money(v)+'</title></rect>'; });
+      s+='<rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+(pad.t+ph-by)+'" rx="2" fill="'+fillCol+'" stroke="'+col+'"><title>'+labels[i]+': '+money(v)+'</title></rect>'; });
   } else {
     const pts=data.map((v,i)=>X(i)+','+Y(v)).join(' ');
-    s+='<polygon points="'+pad.l+','+(pad.t+ph)+' '+pts+' '+(pad.l+pw)+','+(pad.t+ph)+'" fill="'+col+'" opacity="0.12"/>';
+    s+='<polygon points="'+pad.l+','+(pad.t+ph)+' '+pts+' '+(pad.l+pw)+','+(pad.t+ph)+'" fill="'+fillCol+'"'+fillOpacity+'/>';
     s+='<polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="2.5" stroke-linejoin="round"/>';
     data.forEach((v,i)=>{ s+='<circle cx="'+X(i)+'" cy="'+Y(v)+'" r="3.6" fill="#fff" stroke="'+col+'" stroke-width="2.2"><title>'+labels[i]+': '+money(v)+'</title></circle>'; });
   }
@@ -833,23 +893,41 @@ function renderProductos(filtro){
     // Resto del código...
     
     let tv=0, tu=0;
-    rows.forEach(function(p){ tv += p.valor; tu += p.existencia; });
+    rows.forEach(function(p){
+      const cv = Number(p.costo) || 0;
+      const ev = Number(p.existencia) || 0;
+      tv += Number(p.valor) || (cv * ev);
+      tu += ev;
+    });
     // Renderizar: si hay datos, construir tabla; si no, mensaje de vacío
     let h = '';
     if(rows.length > 0){
       h = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'+
-        '<th>Código</th><th>Producto</th><th>Categoría</th><th>Bodega</th>'+
-        '<th class="num">Costo</th><th class="num">Precio</th><th class="num">Existencia</th><th class="num">Mínimo</th><th class="num">Valor</th><th>Acciones</th>'+
+        '<th>CÓDIGO</th><th>PRODUCTO</th><th>CATEGORÍA</th><th>BODEGA</th>'+
+        '<th class="num">COSTO</th><th class="num">PRECIO</th><th class="num">EXISTENCIA</th><th class="num">MÍNIMO</th><th class="num">VALOR</th><th>ACCIONES</th>'+
         '</tr></thead><tbody>';
       rows.forEach(function(p){
-        h += '<tr>'+
-          '<td>'+esc(p.codigo)+'</td><td>'+esc(p.nombre)+'</td>'+
-          '<td>'+esc(p.categoria||'—')+'</td><td>'+esc(p.bodega||'—')+'</td>'+
-          '<td class="num">'+money(p.costo)+'</td><td class="num">'+money(p.precio)+'</td>'+
-          '<td class="num">'+num(p.existencia)+'</td><td class="num">'+num(p.minimo)+'</td><td class="num">'+money(p.valor)+'</td>'+
-          '<td><button class="btn" style="padding:4px 10px" data-edit="'+esc(p.codigo)+'">Editar</button> '+
-            '<button class="btn" style="padding:4px 10px" data-del="'+esc(p.codigo)+'">Eliminar</button>'+
-            '<button class="btn" style="padding:4px 10px" data-ajustar="'+esc(p.codigo)+'">Ajustar</button></td>'+
+        const costoVal = Number(p.costo) || 0;
+        const precioVal = Number(p.precio) || 0;
+        const existenciaVal = Number(p.existencia) || 0;
+        const minimoVal = Number(p.minimo) || 0;
+        const valorVal = Number(p.valor) || (costoVal * existenciaVal);
+
+        h += '<tr>' +
+          '<td>' + esc(p.codigo) + '</td>' +
+          '<td>' + esc(p.nombre) + '</td>' +
+          '<td>' + esc(p.categoria || '—') + '</td>' +
+          '<td>' + esc(p.bodega || '—') + '</td>' +
+          '<td class="num">' + money(costoVal) + '</td>' +
+          '<td class="num">' + money(precioVal) + '</td>' +
+          '<td class="num">' + num(existenciaVal) + '</td>' +
+          '<td class="num">' + num(minimoVal) + '</td>' +
+          '<td class="num">' + money(valorVal) + '</td>' +
+          '<td>' +
+            '<button class="btn" style="padding:4px 10px" data-edit="' + esc(p.codigo) + '">Editar</button> ' +
+            '<button class="btn" style="padding:4px 10px" data-del="' + esc(p.codigo) + '">Eliminar</button> ' +
+            '<button class="btn" style="padding:4px 10px" data-ajustar="' + esc(p.codigo) + '">Ajustar</button>' +
+          '</td>' +
         '</tr>';
       });
       h += '</tbody><tfoot><tr><td>Totales ('+rows.length+')</td><td></td><td></td><td></td>'+
@@ -872,39 +950,64 @@ function leerForm(){
     const el = document.getElementById(id) || document.querySelector('#' + id) || document.querySelector('[name="' + id + '"]');
     return el ? el.value.trim() : '';
   };
+  const costoEl = document.getElementById('p-costo');
+  const precioEl = document.getElementById('p-precio');
+  const existenciaEl = document.getElementById('p-existencia');
+  const minimoEl = document.getElementById('p-minimo');
 
   return {
-    codigo: getVal('p-codigo'),
+    codigo: (document.getElementById('p-codigo') ? document.getElementById('p-codigo').value : '').trim(),
     nombre: getVal('p-nombre'),
     categoria: getVal('p-categoria'),
     bodega: getVal('p-bodega'),
-    costo: Number(getVal('p-costo') || 0),
-    precio: Number(getVal('p-precio') || 0),
-    existencia: Number(getVal('p-existencia') || 0),
-    minimo: Number(getVal('p-minimo') || 0)
+    costo: parseFloat(costoEl ? costoEl.value : '') || 0,
+    precio: parseFloat(precioEl ? precioEl.value : '') || 0,
+    existencia: parseFloat(existenciaEl ? existenciaEl.value : '') || 0,
+    minimo: parseFloat(minimoEl ? minimoEl.value : '') || 0
   };
 }
 function validarProducto(d){
-  if(!d.codigo){ toast('El código del producto es requerido.','error'); $('p-codigo').focus(); return null; }
-  if(!d.nombre){ toast('El nombre del producto es requerido.','error'); $('p-nombre').focus(); return null; }
-  if(d.costo==='' || !isFinite(Number(d.costo)) || Number(d.costo)<0){ toast('El costo debe ser un número mayor o igual a cero.','error'); $('p-costo').focus(); return null; }
-  if(d.precio==='' || !isFinite(Number(d.precio)) || Number(d.precio)<0){ toast('El precio de venta debe ser un número mayor o igual a cero.','error'); $('p-precio').focus(); return null; }
-  const ex = d.existencia==='' ? 0 : Number(d.existencia);
-  if(!isFinite(ex) || ex<0){ toast('La existencia no puede ser negativa.','error'); $('p-existencia').focus(); return null; }
-  const mi = d.minimo==='' ? 0 : Number(d.minimo);
-  if(!isFinite(mi) || mi<0){ toast('El mínimo no puede ser negativo.','error'); $('p-minimo').focus(); return null; }
-  return { codigo:d.codigo, nombre:d.nombre, categoria:d.categoria, bodega:d.bodega,
-    costo:Number(d.costo), precio:Number(d.precio), existencia:ex, minimo:mi };
+  if(!d || !d.codigo){
+    toast('El código del producto es requerido.','error');
+    const el = document.getElementById('p-codigo');
+    if(el) el.focus();
+    return null;
+  }
+  if(!d.nombre){
+    toast('El nombre del producto es requerido.','error');
+    const el = document.getElementById('p-nombre');
+    if(el) el.focus();
+    return null;
+  }
+  return d;
 }
+function sugerirSiguienteCodigo(){
+  var mayor = 0;
+  (PRODUCTOS || []).forEach(function(p){
+    var m = /^P-(\d+)$/i.exec(String((p && p.codigo) || '').trim());
+    if(m){
+      var n = parseInt(m[1], 10);
+      if(isFinite(n) && n > mayor) mayor = n;
+    }
+  });
+  return 'P-' + String(mayor + 1).padStart(4, '0');
+}
+
+function asignarCodigoSugerido(){
+  if(editandoCodigo) return;
+  var el = document.getElementById('p-codigo');
+  if(el){ el.disabled = false; el.value = sugerirSiguienteCodigo(); }
+}
+
 function limpiarForm(){
   ['p-nombre','p-categoria','p-bodega','p-costo','p-precio','p-existencia','p-minimo'].forEach(function(id){ if($(id)) $(id).value=''; });
   editandoCodigo = null;
-  if($('p-codigo')) $('p-codigo').disabled = false;
+  asignarCodigoSugerido();
   hideForm(); $('status').textContent = 'Listo';
 }
 
 function recargar(){
-  if(!hasIPC){ renderProductos(); actualizarModo(); return Promise.resolve(); }
+  if(!hasIPC){ renderProductos(); actualizarModo(); asignarCodigoSugerido(); return Promise.resolve(); }
   return Promise.resolve(window.api.listarProductos()).then(function(rows){
     if(Array.isArray(rows) && rows.length){ setProductos(rows); renderProductos(); actualizarModo(); return null; }
     if(window.api.seedProductos && typeof window.api.seedProductos==='function'){
@@ -913,17 +1016,34 @@ function recargar(){
         .then(function(rows2){ setProductos(Array.isArray(rows2)?rows2:SEED); renderProductos(); actualizarModo(); });
     }
     setProductos(rows); renderProductos(); actualizarModo();
-  }).catch(function(){ toast('No se pudo cargar productos desde SQLite.','error'); renderProductos(); actualizarModo(); });
+  }).catch(function(){ toast('No se pudo cargar productos desde SQLite.','error'); renderProductos(); actualizarModo(); })
+    .then(function(){ asignarCodigoSugerido(); });
 }
 
 function guardarProducto(){
   const d = validarProducto(leerForm()); if(!d) return;
   const esEdicion = !!editandoCodigo;
+  const codigoIngresado = String(d.codigo || '').trim().toUpperCase();
+  const existe = PRODUCTOS.some(function(x) {
+    return String(x.codigo || '').trim().toUpperCase() === codigoIngresado;
+  });
+
+  if (!esEdicion && existe) {
+    toast('El código de producto "' + d.codigo + '" ya existe. Use un código diferente.', 'error');
+    if ($('p-codigo')) $('p-codigo').focus();
+    return;
+  }
+
   if(hasIPC){
     const p = esEdicion ? window.api.actualizarProducto(editandoCodigo, d) : window.api.crearProducto(d);
     Promise.resolve(p).then(function(r){
-      if(r && r.ok){ toast((esEdicion?'Producto actualizado: ':'Producto creado: ')+((r.data&&r.data.nombre)||d.nombre),'ok'); limpiarForm(); recargar(); }
-      else toast((r && r.error) || 'No se pudo guardar el producto.','error');
+      if(r && r.ok){
+        limpiarForm();
+        toast((esEdicion?'Producto actualizado: ':'Producto creado: ')+((r.data&&r.data.nombre)||d.nombre),'ok');
+        return recargar();
+      } else {
+        toast((r && r.error) || 'No se pudo guardar el producto.','error');
+      }
     }).catch(function(){ toast('No se pudo guardar (error de IPC).','error'); });
   } else {
     const i = PRODUCTOS.findIndex(function(x){ return x.codigo===d.codigo; });
@@ -991,75 +1111,6 @@ function bindProductos(){
   if($('p-buscar')) $('p-buscar').addEventListener('input', function(){ renderProductos(this.value); });
 }
 
-/* ---------- Funciones de Acción y Validación ---------- */
-function validarProducto(){
-  const nombre = $('p-nombre').value.trim();
-  const costo = $('p-costo').value.trim();
-  const precio = $('p-precio').value.trim();
-  if(!nombre){ toast('El nombre del producto es obligatorio.','error'); $('p-nombre').focus(); return false; }
-  if(!costo || isNaN(costo) || Number(costo) <= 0){ toast('El costo debe ser un número mayor que cero.','error'); $('p-costo').focus(); return false; }
-  if(!precio || isNaN(precio) || Number(precio) <= 0){ toast('El precio de venta debe ser un número mayor que cero.','error'); $('p-precio').focus(); return false; }
-  return true;
-}
-
-// Agregado: Verificación de código duplicado antes de guardar
-function verificarCodigoDuplicado(codigo){
-  return PRODUCTOS.some(function(p){ return p.codigo === codigo; });
-}
-
-function guardarProducto(){
-  const d = validarProducto(leerForm()); if(!d) return;
-  const esEdicion = !!editandoCodigo;
-  
-  // Verificar si el código ya existe en la lista local (solo para nuevos productos, no en edición)
-  if(!esEdicion && verificarCodigoDuplicado(d.codigo)){
-    toast('El código de producto "'+d.codigo+'" ya existe. Use un código diferente.','error');
-    $('p-codigo').focus();
-    return;
-  }
-  
-  if(hasIPC){
-    const p = esEdicion ? window.api.actualizarProducto(editandoCodigo, d) : window.api.crearProducto(d);
-    Promise.resolve(p).then(function(r){
-      if(r && r.ok){
-        // Actualizar variable local PRODUCTOS para reflejar cambio al instante
-        if(esEdicion){
-          const j = PRODUCTOS.findIndex(function(x){ return x.codigo===editandoCodigo; });
-          if(j!==-1){ PRODUCTOS[j] = mapProducto(Object.assign({}, d, { codigo: editandoCodigo })); }
-          // Re-habilitar campo de código después de guardar edición
-          if($('p-codigo')) $('p-codigo').disabled = false;
-        } else {
-          const j = PRODUCTOS.findIndex(function(x){ return x.codigo===d.codigo; });
-          if(j!==-1){ PRODUCTOS[j] = mapProducto(d); } else { PRODUCTOS.push(mapProducto(d)); }
-        }
-        toast((esEdicion?'Producto actualizado: ':'Producto creado: ')+((r.data&&r.data.nombre)||d.nombre),'ok');
-        renderProductos();
-      } else {
-        toast((r && r.error) || 'No se pudo guardar el producto.','error');
-      }
-    }).catch(function(){ toast('No se pudo guardar (error de IPC).','error'); });
-  } else {
-    const i = PRODUCTOS.findIndex(function(x){ return x.codigo===d.codigo; });
-    if(esEdicion){
-      const j = PRODUCTOS.findIndex(function(x){ return x.codigo===editandoCodigo; });
-      if(j===-1){ toast('El producto "'+editandoCodigo+'" no existe.','error'); return; }
-      PRODUCTOS[j] = mapProducto(Object.assign({}, d, { codigo: editandoCodigo }));
-    } else {
-      if(i!==-1){ toast('Ya existe un producto con el código "'+d.codigo+'".','error'); return; }
-      PRODUCTOS.push(mapProducto(d));
-    }
-    toast((esEdicion?'Producto actualizado: ':'Producto creado: ')+d.nombre,'ok');
-    limpiarForm(); renderProductos();
-  }
-}
-
-function limpiarForm(){
-  $('p-nombre').value = ''; $('p-categoria').value = ''; $('p-bodega').value = '';
-  $('p-costo').value = ''; $('p-precio').value = ''; $('p-existencia').value = ''; $('p-minimo').value = '';
-  editandoCodigo = null; // Resetear estado de edición
-  hideForm(); $('status').textContent = 'Listo';
-}
-
 function hideForm(){
   $('form-producto').style.display = 'none';
   $('contenido-productos').style.display = 'block';
@@ -1071,63 +1122,6 @@ function showForm(){
   $('p-nombre').focus();
 }
 
-/* ---------- Manejo de Eventos de Tabla ---------- */
-function onTablaProductos(e){
-  const b = e.target.closest('button[data-edit],[data-del],[data-ajustar]'); if(!b) return;
-  const cod = b.getAttribute('data-edit') || b.getAttribute('data-del') || b.getAttribute('data-ajustar');
-  const p = PRODUCTOS.find(function(x){ return x.codigo===cod; }); if(!p) return;
-  if(b.hasAttribute('data-edit')){
-    // a) Busca el producto correspondiente usando el código de la fila
-    // b) Asigna editandoCodigo = p.codigo
-    editandoCodigo = p.codigo;
-    // c) Llena cada uno de los inputs del formulario con los valores actuales
-    $('p-codigo').value = p.codigo; $('p-codigo').disabled = true; // Bloquear código para que no se modifique
-    $('p-nombre').value = p.nombre;
-    $('p-categoria').value = p.categoria||'';
-    $('p-bodega').value = p.bodega||'';
-    $('p-costo').value = p.costo;
-    $('p-precio').value = p.precio;
-    $('p-existencia').value = p.existencia;
-    $('p-minimo').value = p.minimo;
-    // e) Mostrar toast indicando que se está editando
-    toast('Editando producto: '+p.nombre,'info');
-    // enfocar nombre para comenzar edición
-    $('p-nombre').focus();
-    return;
-  }
-  if(b.hasAttribute('data-del')){
-    // Lógica de eliminar (mantener la existente)
-    if(!confirm('¿Eliminar el producto "'+p.nombre+'" ('+p.codigo+')?')) return;
-    if(hasIPC){
-      Promise.resolve(window.api.eliminarProducto(p.codigo)).then(function(r){
-        if(r && r.ok){ toast('Producto eliminado: '+p.nombre,'ok'); if(editandoCodigo===p.codigo) limpiarForm(); recargar(); }
-        else toast((r && r.error) || 'No se pudo eliminar el producto.','error');
-      }).catch(function(){ toast('No se pudo eliminar (error de IPC).','error'); });
-    } else {
-      PRODUCTOS = PRODUCTOS.filter(function(x){ return x.codigo!==p.codigo; });
-      if(editandoCodigo===p.codigo) limpiarForm();
-      toast('Producto eliminado: '+p.nombre,'ok'); renderProductos();
-    }
-    return;
-  }
-  if(b.hasAttribute('data-ajustar')){
-    // Lógica de ajuste de existencia (mantener la existente)
-    var nuevoStock = prompt('Ingrese el nuevo stock para '+p.nombre+' (código: '+p.codigo+')', p.existencia);
-    if(nuevoStock===null) return;
-    nuevoStock = Number(nuevoStock);
-    if(isNaN(nuevoStock) || nuevoStock<0){ toast('Stock inválido. Debe ser un número >= 0.','error'); return; }
-    if(hasIPC){
-      Promise.resolve(window.api.actualizarProducto(p.codigo, {existencia:nuevoStock})).then(function(r){
-        if(r && r.ok){ toast('Stock actualizado: '+p.nombre+' → '+nuevoStock,'ok'); recargar(); }
-        else toast((r && r.error) || 'No se pudo actualizar el stock.','error');
-      }).catch(function(){ toast('Error actualizando stock (error de IPC).','error'); });
-    } else {
-      var idx = PRODUCTOS.findIndex(function(x){ return x.codigo===p.codigo; });
-      if(idx!==-1){ PRODUCTOS[idx].existencia = nuevoStock; renderProductos(); toast('Stock actualizado: '+p.nombre+' → '+nuevoStock,'ok'); }
-    }
-  }
-}
-
 /* ---------- Inicio ---------- */
 function init(){
   renderShell();                    // a) Primera: pinta layout, formulario, pestañas y #p-tabla
@@ -1136,13 +1130,15 @@ function init(){
   setProductos(SEED);
   // d) Renderizado inmediato de la tabla para que aparezca poblada desde el primer segundo
   renderProductos();
-  // e) Actualizar modo visual después de pintar UI
+  // e) Asignar código automático sugerido al input #p-codigo (modo nuevo)
+  asignarCodigoSugerido();
+  // f) Actualizar modo visual después de pintar UI
   actualizarModo();
-  // f) Posterior a pintar la UI inicial, si hasIPC ejecutamos listarProductos en segundo plano
-  //    y al resolver, actualizamos PRODUCTOS y volvemos a renderizar para sincronización
+  // g) Posterior a pintar la UI inicial, si hasIPC ejecutamos listarProductos en segundo plano
+  //    y al resolver, actualizamos PRODUCTOS, volvemos a renderizar y re-sugerimos código
   if(hasIPC){
     Promise.resolve(window.api.listarProductos()).then(function(rows){
-      if(Array.isArray(rows) && rows.length){ setProductos(rows); renderProductos(); actualizarModo(); }
+      if(Array.isArray(rows) && rows.length){ setProductos(rows); renderProductos(); actualizarModo(); asignarCodigoSugerido(); }
     }).catch(function(){ console.error('Error cargando productos IPC en init'); actualizarModo(); });
   }
   tick(); setInterval(tick,1000);

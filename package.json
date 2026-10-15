@@ -4,7 +4,9 @@
   "description": "Sistema contable Mónica 9 - módulos web + Electron (Nicaragua, C$)",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "start:inventario": "electron main-inventario.js",
+    "start:cxc": "electron main-cxc.js"
   },
   "author": "Joseling",
   "license": "UNLICENSED",

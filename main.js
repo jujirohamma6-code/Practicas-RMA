@@ -30,6 +30,23 @@ db.exec(`
   )
 `);
 
+function ensureColumn(table, column, definition) {
+  try {
+    const cols = db.prepare('PRAGMA table_info(' + table + ')').all();
+    const existe = cols.some(function (c) { return c.name === column; });
+    if (!existe) db.exec('ALTER TABLE ' + table + ' ADD COLUMN ' + column + ' ' + definition);
+  } catch (error) {
+    // La columna ya existe o la tabla no es inspeccionable: no romper el arranque.
+  }
+}
+
+ensureColumn('productos', 'categoria', 'TEXT');
+ensureColumn('productos', 'bodega', 'TEXT');
+ensureColumn('productos', 'costo', 'REAL DEFAULT 0');
+ensureColumn('productos', 'precio', 'REAL DEFAULT 0');
+ensureColumn('productos', 'existencia', 'REAL DEFAULT 0');
+ensureColumn('productos', 'minimo', 'REAL DEFAULT 0');
+
 const stmts = {
   insert: db.prepare('INSERT INTO cuentas_por_cobrar (id, factura, cliente, monto, abonado, vencimiento, estado) VALUES (@id, @factura, @cliente, @monto, @abonado, @vencimiento, @estado)'),
   getAll: db.prepare('SELECT id, factura, cliente, monto, abonado, vencimiento, estado FROM cuentas_por_cobrar ORDER BY vencimiento ASC'),
