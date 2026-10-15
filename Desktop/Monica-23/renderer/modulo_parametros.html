@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parámetros del Sistema — Monica-23</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg-2: #111827;
+    --bg-3: #1e293b;
+    --bg-4: #0b1120;
+    --border: #334155;
+    --border-soft: #1e293b;
+    --text: #f8fafc;
+    --text-soft: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #2563eb;
+    --accent-2: #1d4ed8;
+    --accent-light: #60a5fa;
+    --accent-soft: rgba(37, 99, 235, .18);
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --shadow: 0 14px 38px rgba(0, 0, 0, .5);
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--bg-4) 100%);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 28px;
+    background: rgba(17, 24, 39, .85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-left h1 { font-size: 18px; font-weight: 600; color: var(--text); }
+  .badge {
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent-light);
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+  .nav-btn {
+    padding: 8px 16px; border-radius: 10px;
+    background: var(--bg-3); color: var(--text-soft);
+    border: 1px solid var(--border);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all .2s ease;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .nav-btn:hover { background: var(--accent-soft); color: var(--accent-light); border-color: var(--accent); }
+  .nav-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .nav-btn.primary:hover { background: var(--accent-2); }
+  .nav-btn.danger { background: transparent; color: var(--danger); border-color: rgba(239, 68, 68, .3); }
+  .nav-btn.danger:hover { background: rgba(239, 68, 68, .1); border-color: var(--danger); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr 280px;
+    gap: 20px;
+    padding: 24px 28px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .panel {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .panel-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-dim);
+    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+
+  .menu-list { list-style: none; }
+  .menu-list li { margin-bottom: 4px; }
+  .menu-list a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    color: var(--text-soft); text-decoration: none;
+    font-size: 13px; font-weight: 500;
+    transition: all .2s ease;
+  }
+  .menu-list a:hover, .menu-list a.active {
+    background: var(--accent-soft); color: var(--accent-light);
+  }
+  .menu-list a.active { border-left: 3px solid var(--accent); }
+
+  .form-section { margin-bottom: 28px; }
+  .form-section h3 {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px; margin-bottom: 14px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label {
+    font-size: 12px; font-weight: 600; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: .4px;
+  }
+  .form-group input, .form-group select {
+    padding: 10px 14px; border-radius: 10px;
+    background: var(--bg-3); color: var(--text);
+    border: 1px solid var(--border);
+    font-size: 13px; outline: none;
+    transition: border-color .2s ease;
+  }
+  .form-group input:focus, .form-group select:focus {
+    border-color: var(--accent);
+  }
+  .form-group input.error, .form-group select.error {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, .15);
+  }
+  .form-group .error-msg {
+    font-size: 11px; color: var(--danger);
+    display: none;
+  }
+  .form-group.has-error .error-msg { display: block; }
+
+  .data-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+  .data-table th {
+    text-align: left; padding: 10px 12px;
+    background: var(--bg-3); color: var(--text-dim);
+    font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 10px 12px; color: var(--text-soft);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .data-table tr:hover td { background: var(--accent-soft); }
+
+  .tag {
+    display: inline-block; padding: 3px 8px; border-radius: 6px;
+    font-size: 11px; font-weight: 600;
+  }
+  .tag-ok { background: rgba(16, 185, 129, .15); color: var(--ok); }
+  .tag-warn { background: rgba(245, 158, 11, .15); color: var(--warn); }
+
+  .info-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border-soft);
+    font-size: 13px;
+  }
+  .info-item:last-child { border-bottom: none; }
+  .info-item .label { color: var(--text-dim); }
+  .info-item .value { color: var(--text); font-weight: 500; }
+
+  .btn {
+    padding: 9px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg-3); color: var(--text-soft);
+    transition: all .2s ease;
+  }
+  .btn:hover { background: var(--accent-soft); color: var(--accent-light); border-color: var(--accent); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { background: var(--accent-2); }
+  .btn-success { background: var(--ok); color: #fff; border-color: var(--ok); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .toast {
+    position: fixed; bottom: 60px; right: 24px;
+    padding: 14px 20px; border-radius: 12px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow);
+    z-index: 9999;
+    animation: slideIn .3s ease;
+    display: none;
+  }
+  .toast.show { display: block; }
+  .toast-success { background: rgba(16, 185, 129, .15); border: 1px solid var(--ok); color: var(--ok); }
+  .toast-error { background: rgba(239, 68, 68, .15); border: 1px solid var(--danger); color: var(--danger); }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .shortcut-hint {
+    position: fixed; bottom: 16px; right: 16px;
+    padding: 8px 14px; border-radius: 8px;
+    background: var(--bg-3); border: 1px solid var(--border);
+    font-size: 11px; color: var(--text-dim);
+  }
+  kbd {
+    padding: 2px 6px; border-radius: 4px;
+    background: var(--bg); border: 1px solid var(--border);
+    font-size: 10px; font-family: inherit; color: var(--text-soft);
+  }
+
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-left">
+    <h1>Parámetros del Sistema</h1>
+    <span class="badge">Configuración</span>
+  </div>
+  <div class="topbar-right">
+    <a class="nav-btn" href="index.html">Inicio</a>
+    <a class="nav-btn" href="modulo_manual.html">Manual</a>
+    <a class="nav-btn danger" href="#" onclick="window.close(); return false;">Salir</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="panel">
+    <div class="panel-title">Categorías</div>
+    <ul class="menu-list">
+      <li><a href="#empresa" class="active">Datos de la Empresa</a></li>
+      <li><a href="#moneda">Moneda y Formato</a></li>
+      <li><a href="#impuestos">Impuestos</a></li>
+      <li><a href="#accesos">Accesos y Roles</a></li>
+      <li><a href="#usuarios">Usuarios</a></li>
+      <li><a href="#respaldo">Respaldo</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <section class="panel" id="empresa">
+      <div class="form-section">
+        <h3>Datos de la Empresa</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="titulo">Razón Social</label>
+            <input type="text" id="titulo" placeholder="Nombre de la empresa">
+            <span class="error-msg">Este campo es obligatorio</span>
+          </div>
+          <div class="form-group">
+            <label for="codigo">Código / NIT</label>
+            <input type="text" id="codigo" placeholder="Código de identificación">
+            <span class="error-msg">Este campo es obligatorio</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fecha">Fecha de Inicio</label>
+            <input type="text" id="fecha" placeholder="DD/MM/YYYY">
+          </div>
+          <div class="form-group">
+            <label for="licencia">Licencia</label>
+            <select id="licencia">
+              <option>Gratuita</option>
+              <option>Empresarial</option>
+              <option>Profesional</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sistema_operativo">Sistema Operativo</label>
+            <select id="sistema_operativo">
+              <option>Windows 10</option>
+              <option>Windows 11</option>
+              <option>Windows 8</option>
+              <option>Linux</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="directorio_empresa">Directorio de Datos</label>
+            <input type="text" id="directorio_empresa" placeholder="Ruta de almacenamiento">
+          </div>
+        </div>
+        <div style="margin-top: 16px; display: flex; gap: 10px;">
+          <button class="btn btn-primary" id="btnGuardar">Guardar Cambios</button>
+          <button class="btn" id="btnRecargar">Restablecer</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="moneda" style="margin-top: 20px;">
+      <div class="form-section">
+        <h3>Moneda y Formato</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="moneda_principal">Moneda Principal</label>
+            <select id="moneda_principal">
+              <option>COP — Peso colombiano</option>
+              <option>USD — Dólar estadounidense</option>
+              <option>EUR — Euro</option>
+              <option>MXN — Peso mexicano</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="formato_fecha">Formato de Fecha</label>
+            <select id="formato_fecha">
+              <option>DD/MM/YYYY</option>
+              <option>MM/DD/YYYY</option>
+              <option>YYYY-MM-DD</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="simbolo_moneda">Símbolo Monetario</label>
+            <input type="text" id="simbolo_moneda" value="$">
+          </div>
+          <div class="form-group">
+            <label for="decimales">Decimales</label>
+            <select id="decimales">
+              <option>0</option>
+              <option>2</option>
+              <option>3</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="impuestos" style="margin-top: 20px;">
+      <div class="form-section">
+        <h3>Impuestos</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="iva_default">IVA por defecto (%)</label>
+            <input type="number" id="iva_default" value="19">
+          </div>
+          <div class="form-group">
+            <label for="ica">ICA (%)</label>
+            <input type="number" id="ica" value="0">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 14px;">
+          <button class="btn btn-primary" onclick="showToast('Impuesto agregado correctamente')">Agregar Impuesto</button>
+        </div>
+        <table class="data-table" style="margin-top: 14px;">
+          <thead>
+            <tr><th>Código</th><th>Nombre</th><th>Tasa</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>IVA19</td><td>IVA 19%</td><td>19%</td><td><span class="tag tag-ok">Activo</span></td></tr>
+            <tr><td>IVA5</td><td>IVA 5%</td><td>5%</td><td><span class="tag tag-ok">Activo</span></td></tr>
+            <tr><td>EXC</td><td>Exento</td><td>0%</td><td><span class="tag tag-warn">Inactivo</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" id="accesos" style="margin-top: 20px;">
+      <div class="form-section">
+        <h3>Accesos y Roles</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rol">Rol</label>
+            <select id="rol">
+              <option>Administrador</option>
+              <option>Vendedor</option>
+              <option>Contador</option>
+              <option>Solo lectura</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="permiso">Permiso</label>
+            <select id="permiso">
+              <option>Acceso total</option>
+              <option>Facturación</option>
+              <option>Reportes</option>
+              <option>Consulta</option>
+            </select>
+          </div>
+        </div>
+        <table class="data-table" style="margin-top: 14px;">
+          <thead>
+            <tr><th>Rol</th><th>Usuarios</th><th>Permisos</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Administrador</td><td>2</td><td><span class="tag tag-ok">Total</span></td></tr>
+            <tr><td>Vendedor</td><td>5</td><td><span class="tag tag-warn">Parcial</span></td></tr>
+            <tr><td>Contador</td><td>1</td><td><span class="tag tag-warn">Parcial</span></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top: 14px; display: flex; gap: 10px;">
+          <button class="btn btn-primary">Guardar</button>
+          <button class="btn">Cancelar</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="panel">
+    <div class="panel-title">Información del Sistema</div>
+    <div class="info-item"><span class="label">Versión</span><span class="value">2.3.0</span></div>
+    <div class="info-item"><span class="label">Licencia</span><span class="value" id="info_licencia">—</span></div>
+    <div class="info-item"><span class="label">Último respaldo</span><span class="value">2026-10-13</span></div>
+    <div class="info-item"><span class="label">Base de datos</span><span class="value">PostgreSQL 15</span></div>
+    <div class="info-item"><span class="label">Almacenamiento</span><span class="value">2.4 GB / 50 GB</span></div>
+    <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+      <button class="btn btn-success">Respaldar ahora</button>
+      <button class="btn">Restaurar</button>
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="shortcut-hint">Presiona <kbd>Esc</kbd> para salir</div>
+
+<script>
+  const API = window.api;
+
+  function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = `toast toast-${type} show`;
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  function setFieldError(id, hasError) {
+    const el = document.getElementById(id);
+    const group = el.closest('.form-group');
+    el.classList.toggle('error', hasError);
+    group.classList.toggle('has-error', hasError);
+  }
+
+  async function cargarParametros() {
+    try {
+      const datos = await API.leerParametros();
+      if (datos) {
+        document.getElementById('titulo').value = datos.titulo || '';
+        document.getElementById('codigo').value = datos.codigo || '';
+        document.getElementById('fecha').value = datos.fecha || '';
+        document.getElementById('licencia').value = datos.licencia || 'Gratuita';
+        document.getElementById('sistema_operativo').value = datos.sistema_operativo || 'Windows 10';
+        document.getElementById('directorio_empresa').value = datos.directorio_empresa || '';
+        document.getElementById('info_licencia').textContent = datos.licencia || '—';
+      }
+    } catch (err) {
+      showToast('Error al cargar los parámetros: ' + err.message, 'error');
+    }
+  }
+
+  function validarCampos() {
+    let valido = true;
+    const campos = ['titulo', 'codigo'];
+    for (const id of campos) {
+      const el = document.getElementById(id);
+      const vacio = !el.value.trim();
+      setFieldError(id, vacio);
+      if (vacio) valido = false;
+    }
+    return valido;
+  }
+
+  async function guardarParametros() {
+    if (!validarCampos()) {
+      showToast('Complete los campos obligatorios antes de guardar', 'error');
+      return;
+    }
+
+    const payload = {
+      titulo: document.getElementById('titulo').value.trim(),
+      codigo: document.getElementById('codigo').value.trim(),
+      fecha: document.getElementById('fecha').value.trim(),
+      licencia: document.getElementById('licencia').value,
+      sistema_operativo: document.getElementById('sistema_operativo').value,
+      directorio_empresa: document.getElementById('directorio_empresa').value.trim()
+    };
+
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    try {
+      const resultado = await API.guardarParametros(payload);
+      showToast('Parámetros guardados correctamente en la base de datos');
+      document.getElementById('info_licencia').textContent = resultado.licencia || '—';
+    } catch (err) {
+      showToast('Error al guardar: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar Cambios';
+    }
+  }
+
+  document.getElementById('btnGuardar').addEventListener('click', guardarParametros);
+  document.getElementById('btnRecargar').addEventListener('click', () => {
+    cargarParametros();
+    showToast('Formulario restablecido con los datos guardados');
+  });
+
+  ['titulo', 'codigo'].forEach(id => {
+    document.getElementById(id).addEventListener('input', (e) => {
+      if (e.target.value.trim()) setFieldError(id, false);
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      window.close();
+    }
+  });
+
+  cargarParametros();
+</script>
+
+</body>
+</html>
