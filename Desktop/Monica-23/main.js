@@ -14,7 +14,7 @@ function crearVentana() {
     minHeight: 620,
     backgroundColor: "#0f172a",
     autoHideMenuBar: true,
-    title: "MÓNICA 9 · Módulo Parámetros",
+    title: "Contavex · Módulo Parámetros",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -25,7 +25,7 @@ function crearVentana() {
 
   ventanaPrincipal.webContents.on("did-finish-load", () => {
     console.log("Renderer cargado correctamente.");
-    if (process.env.MONICA_SMOKE_TEST === "1") {
+    if (process.env.CONTAVEX_SMOKE_TEST === "1") {
       console.log("SMOKE_OK");
       setTimeout(() => app.quit(), 600);
     }
@@ -36,7 +36,7 @@ function crearVentana() {
   });
 
   ventanaPrincipal.loadFile(
-    path.join(__dirname, "renderer", process.env.MONICA_SMOKE_PAGE || "index.html")
+    path.join(__dirname, "renderer", process.env.CONTAVEX_SMOKE_PAGE || "index.html")
   );
 }
 

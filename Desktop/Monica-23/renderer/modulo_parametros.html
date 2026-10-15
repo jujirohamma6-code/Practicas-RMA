@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parámetros del Sistema — Monica-23</title>
+<title>Parámetros del Sistema — Contavex</title>
 <style>
   :root {
     --bg: #0f172a;
@@ -190,6 +190,8 @@
     font-size: 13px; font-weight: 500;
     box-shadow: var(--shadow);
     z-index: 9999;
+    max-width: 340px;
+    word-wrap: break-word;
     animation: slideIn .3s ease;
     display: none;
   }
@@ -253,19 +255,19 @@
         <div class="form-row">
           <div class="form-group">
             <label for="titulo">Razón Social</label>
-            <input type="text" id="titulo" placeholder="Nombre de la empresa">
+            <input type="text" id="titulo" placeholder="Nombre de la empresa" maxlength="200">
             <span class="error-msg">Este campo es obligatorio</span>
           </div>
           <div class="form-group">
             <label for="codigo">Código / NIT</label>
-            <input type="text" id="codigo" placeholder="Código de identificación">
+            <input type="text" id="codigo" placeholder="Código de identificación" maxlength="40">
             <span class="error-msg">Este campo es obligatorio</span>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label for="fecha">Fecha de Inicio</label>
-            <input type="text" id="fecha" placeholder="DD/MM/YYYY">
+            <input type="text" id="fecha" placeholder="DD/MM/YYYY" maxlength="20">
           </div>
           <div class="form-group">
             <label for="licencia">Licencia</label>
@@ -288,7 +290,7 @@
           </div>
           <div class="form-group">
             <label for="directorio_empresa">Directorio de Datos</label>
-            <input type="text" id="directorio_empresa" placeholder="Ruta de almacenamiento">
+            <input type="text" id="directorio_empresa" placeholder="Ruta de almacenamiento" maxlength="260">
           </div>
         </div>
         <div style="margin-top: 16px; display: flex; gap: 10px;">
@@ -435,6 +437,19 @@
     setTimeout(() => toast.classList.remove('show'), 3500);
   }
 
+  function conTimeout(promise, ms = 8000) {
+    return new Promise((resolve, reject) => {
+      const temporizador = setTimeout(
+        () => reject(new Error('La operación tardó demasiado. Verifique la conexión e intente de nuevo.')),
+        ms
+      );
+      promise.then(
+        (valor) => { clearTimeout(temporizador); resolve(valor); },
+        (error) => { clearTimeout(temporizador); reject(error); }
+      );
+    });
+  }
+
   function setFieldError(id, hasError) {
     const el = document.getElementById(id);
     const group = el.closest('.form-group');
@@ -443,8 +458,12 @@
   }
 
   async function cargarParametros() {
+    if (!API) {
+      showToast('Backend no disponible. Abra la aplicación desde Electron.', 'error');
+      return;
+    }
     try {
-      const datos = await API.leerParametros();
+      const datos = await conTimeout(API.leerParametros());
       if (datos) {
         document.getElementById('titulo').value = datos.titulo || '';
         document.getElementById('codigo').value = datos.codigo || '';
@@ -472,6 +491,10 @@
   }
 
   async function guardarParametros() {
+    if (!API) {
+      showToast('Backend no disponible. Abra la aplicación desde Electron.', 'error');
+      return;
+    }
     if (!validarCampos()) {
       showToast('Complete los campos obligatorios antes de guardar', 'error');
       return;
@@ -491,9 +514,9 @@
     btn.textContent = 'Guardando...';
 
     try {
-      const resultado = await API.guardarParametros(payload);
+      const resultado = await conTimeout(API.guardarParametros(payload));
       showToast('Parámetros guardados correctamente en la base de datos');
-      document.getElementById('info_licencia').textContent = resultado.licencia || '—';
+      document.getElementById('info_licencia').textContent = (resultado && resultado.licencia) || '—';
     } catch (err) {
       showToast('Error al guardar: ' + err.message, 'error');
     } finally {

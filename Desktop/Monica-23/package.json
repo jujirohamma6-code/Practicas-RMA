@@ -1,7 +1,7 @@
 {
-  "name": "monica9-parametros",
+  "name": "contavex-parametros",
   "version": "1.0.0",
-  "description": "Prototipo Electron de los módulos Parámetros y Manual de MÓNICA 9",
+  "description": "Prototipo Electron de los módulos Parámetros y Manual de Contavex",
   "main": "main.js",
   "author": "Tirsa",
   "license": "MIT",

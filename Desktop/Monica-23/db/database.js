@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS empresa_parametros (
   fecha            TEXT NOT NULL DEFAULT '',
   licencia         TEXT NOT NULL DEFAULT 'Gratuita',
   sistema_operativo TEXT NOT NULL DEFAULT 'Windows 8',
-  directorio_empresa TEXT NOT NULL DEFAULT 'C:\\MONICA9\\mi_empresa\\',
+  directorio_empresa TEXT NOT NULL DEFAULT 'C:\\CONTAVEX\\mi_empresa\\',
   actualizado_en   TEXT NOT NULL DEFAULT ''
 );
 
@@ -53,7 +53,7 @@ async function init(userDataDir) {
     locateFile: (file) => path.join(path.dirname(require.resolve("sql.js")), file)
   });
 
-  dbPath = path.join(userDataDir, "monica.db");
+  dbPath = path.join(userDataDir, "contavex.db");
 
   if (fs.existsSync(dbPath)) {
     const archivo = fs.readFileSync(dbPath);
@@ -82,7 +82,7 @@ function sembrarValoresIniciales() {
         "09/10/2026",
         "Gratuita",
         "Windows 8",
-        "C:\\MONICA9\\mi_empresa\\",
+        "C:\\CONTAVEX\\mi_empresa\\",
         new Date().toISOString()
       ]
     );
@@ -126,7 +126,7 @@ function guardarParametros(p = {}) {
     fecha: p.fecha ?? actual.fecha ?? "",
     licencia: p.licencia ?? actual.licencia ?? "Gratuita",
     sistema_operativo: p.sistema_operativo ?? actual.sistema_operativo ?? "Windows 8",
-    directorio_empresa: p.directorio_empresa ?? actual.directorio_empresa ?? "C:\\MONICA9\\mi_empresa\\"
+    directorio_empresa: p.directorio_empresa ?? actual.directorio_empresa ?? "C:\\CONTAVEX\\mi_empresa\\"
   };
 
   db.run(

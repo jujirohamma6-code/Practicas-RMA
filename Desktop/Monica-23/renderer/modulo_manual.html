@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual de Usuario — Monica-23</title>
+<title>Manual de Usuario — Contavex</title>
 <style>
   :root {
     --bg: #0f172a;
@@ -220,7 +220,7 @@
       <button class="sidebar-tab" data-tab="buscar">Buscar</button>
     </div>
     <div class="sidebar-search">
-      <input type="text" placeholder="Buscar en el manual..." id="searchInput">
+      <input type="text" placeholder="Buscar en el manual..." id="searchInput" maxlength="100">
     </div>
     <div class="sidebar-content" id="topicList">
       <div class="topic-item active" data-topic="intro">
@@ -258,8 +258,8 @@
       <h2 class="article-title" id="articleTitle">Introducción</h2>
       <div class="article-meta" id="articleMeta">Última actualización: Octubre 2026 &middot; 3 min lectura</div>
       <div class="article-body" id="articleBody">
-        <h3>Bienvenido a Monica-23</h3>
-        <p>Monica-23 es un sistema integral de gestión empresarial diseñado para administrar facturación, inventario, reportes y configuración de usuarios en un único entorno de trabajo.</p>
+        <h3>Bienvenido a Contavex</h3>
+        <p>Contavex es un sistema integral de gestión empresarial diseñado para administrar facturación, inventario, reportes y configuración de usuarios en un único entorno de trabajo.</p>
         <div class="callout callout-info">
           <strong>Consejo:</strong> Use el índice lateral para navegar por los diferentes temas del manual. La búsqueda le permite encontrar rápidamente cualquier sección.
         </div>
@@ -287,8 +287,8 @@
       title: 'Introducción',
       meta: 'Última actualización: Octubre 2026 · 3 min lectura',
       body: `
-        <h3>Bienvenido a Monica-23</h3>
-        <p>Monica-23 es un sistema integral de gestión empresarial diseñado para administrar facturación, inventario, reportes y configuración de usuarios en un único entorno de trabajo.</p>
+        <h3>Bienvenido a Contavex</h3>
+        <p>Contavex es un sistema integral de gestión empresarial diseñado para administrar facturación, inventario, reportes y configuración de usuarios en un único entorno de trabajo.</p>
         <div class="callout callout-info"><strong>Consejo:</strong> Use el índice lateral para navegar por los diferentes temas del manual.</div>
         <h3>Requisitos del Sistema</h3>
         <ul><li>Windows 10 o superior</li><li>4 GB de RAM mínimo (8 GB recomendado)</li><li>Conexión a internet para actualizaciones</li></ul>
@@ -373,55 +373,59 @@
     });
   }
 
-  topicList.addEventListener('click', (e) => {
-    const item = e.target.closest('.topic-item');
-    if (item) loadTopic(item.dataset.topic);
-  });
-
-  searchInput.addEventListener('input', (e) => {
-    const q = e.target.value.toLowerCase();
-    document.querySelectorAll('.topic-item').forEach(item => {
-      const text = item.textContent.toLowerCase();
-      item.style.display = text.includes(q) ? 'block' : 'none';
+  try {
+    topicList.addEventListener('click', (e) => {
+      const item = e.target.closest('.topic-item');
+      if (item) loadTopic(item.dataset.topic);
     });
-  });
 
-  document.getElementById('prevBtn').addEventListener('click', () => {
-    const keys = Object.keys(topics);
-    const idx = keys.indexOf(currentTopic);
-    if (idx > 0) loadTopic(keys[idx - 1]);
-  });
-
-  document.getElementById('nextBtn').addEventListener('click', () => {
-    const keys = Object.keys(topics);
-    const idx = keys.indexOf(currentTopic);
-    if (idx < keys.length - 1) loadTopic(keys[idx + 1]);
-  });
-
-  document.querySelectorAll('.sidebar-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll('.topic-item').forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(q) ? 'block' : 'none';
+      });
     });
-  });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      window.close();
-    }
-    if (e.altKey && e.key === 'ArrowLeft') {
+    document.getElementById('prevBtn').addEventListener('click', () => {
       const keys = Object.keys(topics);
       const idx = keys.indexOf(currentTopic);
       if (idx > 0) loadTopic(keys[idx - 1]);
-    }
-    if (e.altKey && e.key === 'ArrowRight') {
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
       const keys = Object.keys(topics);
       const idx = keys.indexOf(currentTopic);
       if (idx < keys.length - 1) loadTopic(keys[idx + 1]);
-    }
-  });
+    });
 
-  loadTopic('intro');
+    document.querySelectorAll('.sidebar-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        window.close();
+      }
+      if (e.altKey && e.key === 'ArrowLeft') {
+        const keys = Object.keys(topics);
+        const idx = keys.indexOf(currentTopic);
+        if (idx > 0) loadTopic(keys[idx - 1]);
+      }
+      if (e.altKey && e.key === 'ArrowRight') {
+        const keys = Object.keys(topics);
+        const idx = keys.indexOf(currentTopic);
+        if (idx < keys.length - 1) loadTopic(keys[idx + 1]);
+      }
+    });
+
+    loadTopic('intro');
+  } catch (err) {
+    console.error('Error al inicializar el manual:', err);
+  }
 </script>
 
 </body>
