@@ -1,17 +1,36 @@
 {
-  "name": "monica9",
-  "version": "1.0.0",
-  "description": "Sistema contable Mónica 9 - módulos web + Electron (Nicaragua, C$)",
+  "name": "Contavex",
+  "version": "0.1.0",
+  "description": "Sistema contable modular - Módulos Inventario y Cuentas por Cobrar",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --pack",
+    "publish": "electron-builder --publish always"
   },
+  "productName": "Contavex",
   "author": "Joseling",
   "license": "UNLICENSED",
+  "build": {
+    "appId": "contavex.app",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "cuentas_por_cobrar.html",
+      "inventario.html",
+      "estilos-modulos.css",
+      "*.db"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  },
   "devDependencies": {
     "electron": "^37.0.0"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.0"
   }
+}
 }
