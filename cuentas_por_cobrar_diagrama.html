@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mónica 9 — Diagrama de Cuentas por Cobrar</title>
+<style>
+  :root{
+    --bg:#070a0f; --panel:#0e151f; --card:#101a26; --line:#1c2836; --line2:#26374b;
+    --text:#e7eef7; --muted:#7f93ac; --amber:#f5a623; --amber2:#ffc45c; --green:#34d399;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;height:100vh;display:flex;flex-direction:column;color:var(--text);
+    font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;font-size:13px;background:
+      repeating-linear-gradient(0deg,rgba(125,155,205,.06) 0 1px,transparent 1px 34px),
+      repeating-linear-gradient(90deg,rgba(125,155,205,.06) 0 1px,transparent 1px 34px),
+      radial-gradient(1000px 600px at 80% -12%,rgba(245,166,35,.09),transparent 55%),
+      linear-gradient(160deg,#0a0f16,#070a0f)}
+  .top{flex:none;display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line2);background:rgba(10,15,22,.75)}
+  .top h1{margin:0;font-size:15px;font-weight:700}
+  .top h1 span{color:var(--amber2)}
+  .badge{margin-left:auto;font-size:11px;color:var(--muted);border:1px solid var(--line2);border-radius:6px;padding:5px 10px}
+  .legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--muted);padding:9px 18px;border-bottom:1px solid var(--line)}
+  .legend .it{display:flex;align-items:center;gap:7px}
+  .sw{width:20px;height:13px;border-radius:3px;display:inline-block}
+  .sw.p{background:#131d29;border:1px solid #2a3b52;border-left:4px solid var(--amber)}
+  .sw.q{background:#1b2740;border:1px solid var(--amber);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+  .sw.s{background:#0f2e1f;border:1px solid var(--green);border-radius:7px}
+  .sw.e{background:#2e2410;border:1px solid var(--amber);border-radius:7px}
+  .wrap{flex:1;min-height:0;overflow:auto;padding:22px}
+  #dg{display:block}
+  .foot{flex:none;display:flex;align-items:center;gap:16px;padding:8px 18px;border-top:1px solid var(--line2);background:rgba(10,15,22,.75);font-size:11.5px;color:var(--muted)}
+  .foot b{color:var(--amber2)}
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>Mónica 9 — <span>Diagrama de Cuentas por Cobrar</span></h1>
+    <span class="badge">Flujograma por carriles · venta, cobro, conciliación y cierre</span>
+  </div>
+  <div class="legend">
+    <span class="it"><span class="sw s"></span> Inicio</span>
+    <span class="it"><span class="sw e"></span> Fin</span>
+    <span class="it"><span class="sw p"></span> Proceso</span>
+    <span class="it"><span class="sw q"></span> Decisión</span>
+    <span class="it">El flujo cruza los carriles de Comercial → Cliente → Tesorería → Contabilidad.</span>
+  </div>
+  <div class="wrap"><div id="dg"></div></div>
+  <div class="foot"><span>Pasos: <b>14</b></span><span>Carriles: <b>4</b></span><span>Moneda: Córdobas (C$) · US$ 1 = C$ 19.960</span></div>
+
+<script>
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const COLW=280, colX=[20,320,620,920], TOP=20, HH=48;
+const CX = i => colX[i] + COLW/2;
+const LANES = ['COMERCIAL / VENTAS','CLIENTE','TESORERÍA / ADMINISTRACIÓN','CONTABILIDAD / COBRANZAS'];
+
+const NODES = [
+  {id:'A', col:0, y:100, w:150, h:46, type:'term', c:'start', lines:['Inicio']},
+  {id:'B', col:0, y:190, w:230, h:74, type:'proc',  lines:['Generación de Pedido','/ Orden de Venta']},
+  {id:'C', col:0, y:300, w:230, h:74, type:'proc',  lines:['Envío de la factura al cliente']},
+  {id:'D', col:1, y:170, w:230, h:74, type:'proc',  lines:['Recepción de la factura','Revisión de condiciones y montos']},
+  {id:'E', col:1, y:300, w:230, h:96, type:'proc',  lines:['Emisión del pago','Transferencia, depósito o cheque','Envío del comprobante a la empresa']},
+  {id:'F', col:2, y:150, w:230, h:92, type:'proc',  lines:['Recepción del comprobante','Validación del pago contra','fondos del banco']},
+  {id:'G', col:2, y:280, w:230, h:120, type:'dec',  lines:['¿El pago cubre el monto','total de la factura?']},
+  {id:'H', col:2, y:470, w:230, h:74, type:'proc',  lines:['Registrar pago parcial','en el sistema']},
+  {id:'I', col:2, y:580, w:230, h:88, type:'proc',  lines:['Generar saldo pendiente','Notificar al cliente']},
+  {id:'J', col:3, y:150, w:230, h:92, type:'proc',  lines:['Aplicación y conciliación del pago','Abono completo a la factura','en el sistema contable']},
+  {id:'K', col:3, y:300, w:220, h:110, type:'dec',  lines:['¿Hay mora','vencida?']},
+  {id:'L', col:3, y:470, w:230, h:74, type:'proc',  lines:['Envío de recordatorios','/ avisos de mora']},
+  {id:'M', col:3, y:590, w:230, h:74, type:'proc',  lines:['Actualización del reporte','Kardex y antigüedad de saldos']},
+  {id:'N', col:3, y:700, w:230, h:92, type:'proc',  lines:['Archivo definitivo','Factura marcada como Pagada','y Saldada']},
+  {id:'O', col:3, y:810, w:150, h:46, type:'term', c:'end', lines:['FIN']}
+];
+const byId={}; NODES.forEach(n=>{ n.cx=CX(n.col); n.x=n.cx-n.w/2; n.cy=n.y+n.h/2; byId[n.id]=n; });
+
+const H = 900, W = colX[3]+COLW+20;
+const R  = n => n.x+n.w, Lft = n => n.x, B = n => n.y+n.h, T = n => n.y;
+
+function textSVG(lines, cx, cy, fill, weight, size){
+  const lh = (size&&size>12?16:15), y0 = cy - (lines.length-1)*lh/2 + 5;
+  return '<text x="'+cx+'" y="'+y0+'" text-anchor="middle" fill="'+fill+'" font-size="'+(size||12)+'" font-weight="'+(weight||'400')+'" font-family="Segoe UI,Tahoma,sans-serif">'+
+    lines.map((l,i)=>'<tspan x="'+cx+'" dy="'+(i?lh:0)+'">'+esc(l)+'</tspan>').join('')+'</text>';
+}
+function nodeSVG(n){
+  if(n.type==='dec'){
+    const pts=[n.cx,n.y, n.x+n.w,n.cy, n.cx,n.y+n.h, n.x,n.cy].join(' ');
+    return '<polygon points="'+pts+'" fill="#1b2740" stroke="#f5a623" stroke-width="1.6"/>'+textSVG(n.lines,n.cx,n.cy,'#ffc45c','700');
+  }
+  if(n.type==='term'){
+    const s = n.c==='start' ? {f:'#0f2e1f',st:'#34d399',tx:'#8af0bd'} : {f:'#2e2410',st:'#f5a623',tx:'#ffc45c'};
+    return '<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="'+(n.h/2)+'" fill="'+s.f+'" stroke="'+s.st+'" stroke-width="1.6"/>'+textSVG(n.lines,n.cx,n.cy,s.tx,'700',13);
+  }
+  let s='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="9" fill="#131d29" stroke="#2a3b52" stroke-width="1.4"/>';
+  s+='<rect x="'+n.x+'" y="'+n.y+'" width="4" height="'+n.h+'" rx="2" fill="#f5a623" opacity="0.85"/>';
+  return s + textSVG(n.lines,n.cx,n.cy,'#e7eef7','600');
+}
+
+function render(){
+  let lanes='';
+  for(let i=0;i<4;i++){
+    lanes+='<rect x="'+colX[i]+'" y="'+TOP+'" width="'+COLW+'" height="'+(H-TOP)+'" fill="'+(i%2?'rgba(255,255,255,.018)':'rgba(255,255,255,.035)')+'"/>';
+    lanes+='<rect x="'+colX[i]+'" y="'+TOP+'" width="'+COLW+'" height="'+HH+'" fill="rgba(245,166,35,.08)"/>';
+    lanes+='<line x1="'+colX[i]+'" y1="'+TOP+'" x2="'+colX[i]+'" y2="'+H+'" stroke="#1c2836"/>';
+    lanes+='<line x1="'+(colX[i]+COLW)+'" y1="'+TOP+'" x2="'+(colX[i]+COLW)+'" y2="'+H+'" stroke="#1c2836"/>';
+    lanes+='<line x1="'+colX[i]+'" y1="'+(TOP+HH)+'" x2="'+(colX[i]+COLW)+'" y2="'+(TOP+HH)+'" stroke="#1c2836"/>';
+    lanes+='<text x="'+(colX[i]+COLW/2)+'" y="'+(TOP+HH/2+4)+'" text-anchor="middle" fill="#f5a623" font-size="12.5" font-weight="700" font-family="Segoe UI,Tahoma,sans-serif">'+esc(LANES[i])+'</text>';
+  }
+  const arrow = d => '<path d="'+d+'" fill="none" stroke="#8fa6c2" stroke-width="1.8" marker-end="url(#ah)"/>';
+  const lbl = (x,y,t,color) => '<text x="'+x+'" y="'+y+'" fill="'+(color||'#ffc45c')+'" font-size="11" font-weight="700" font-family="Segoe UI,Tahoma,sans-serif">'+esc(t)+'</text>';
+  let e='';
+  // verticales dentro de carril
+  e+=arrow('M'+byId.A.cx+' '+B(byId.A)+' V'+T(byId.B));
+  e+=arrow('M'+byId.B.cx+' '+B(byId.B)+' V'+T(byId.C));
+  e+=arrow('M'+byId.D.cx+' '+B(byId.D)+' V'+T(byId.E));
+  e+=arrow('M'+byId.F.cx+' '+B(byId.F)+' V'+T(byId.G));
+  e+=arrow('M'+byId.G.cx+' '+B(byId.G)+' V'+T(byId.H));
+  e+=lbl(byId.G.cx+9, (B(byId.G)+T(byId.H))/2, 'NO (pago parcial)', '#fca5a5');
+  e+=arrow('M'+byId.H.cx+' '+B(byId.H)+' V'+T(byId.I));
+  e+=arrow('M'+byId.J.cx+' '+B(byId.J)+' V'+T(byId.K));
+  e+=arrow('M'+byId.K.cx+' '+B(byId.K)+' V'+T(byId.L));
+  e+=lbl(byId.K.cx+9, (B(byId.K)+T(byId.L))/2, 'SÍ', '#34d399');
+  e+=arrow('M'+byId.L.cx+' '+B(byId.L)+' V'+T(byId.M));
+  e+=arrow('M'+byId.M.cx+' '+B(byId.M)+' V'+T(byId.N));
+  e+=arrow('M'+byId.N.cx+' '+B(byId.N)+' V'+T(byId.O));
+  // cruces entre carriles
+  e+=arrow('M'+R(byId.C)+' '+byId.C.cy+' H310 V'+byId.D.cy+' H'+Lft(byId.D));   // C -> D
+  e+=arrow('M'+R(byId.E)+' '+byId.E.cy+' H610 V170 H'+Lft(byId.F));              // E -> F
+  e+=arrow('M'+R(byId.G)+' '+byId.G.cy+' H902 V'+byId.J.cy+' H'+Lft(byId.J));    // G -> J (pago total)
+  e+=lbl(906, 250, 'SÍ (pago total)', '#34d399');
+  e+=arrow('M'+Lft(byId.I)+' '+byId.I.cy+' H632 V170 H'+Lft(byId.F));            // I -> F (bucle)
+  e+=arrow('M'+Lft(byId.K)+' '+byId.K.cy+' H918 V'+byId.M.cy+' H'+Lft(byId.M));  // K -> M (no mora)
+  e+=lbl(922, (byId.K.cy+byId.M.cy)/2, 'NO', '#7f93ac');
+
+  let nodes=''; NODES.forEach(n=> nodes+=nodeSVG(n));
+  const defs='<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8fa6c2"/></marker></defs>';
+  document.getElementById('dg').innerHTML =
+    '<svg id="svgd" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+defs+lanes+e+nodes+'</svg>';
+}
+render();
+</script>
+</body>
+</html>

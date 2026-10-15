@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mónica 9 — Diagrama de Inventario</title>
+<style>
+  :root{
+    --bg:#070a0f; --panel:#0e151f; --card:#101a26; --line:#1c2836; --line2:#26374b;
+    --text:#e7eef7; --muted:#7f93ac; --amber:#f5a623; --amber2:#ffc45c;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;height:100vh;display:flex;flex-direction:column;color:var(--text);
+    font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;font-size:13px;background:
+      repeating-linear-gradient(0deg,rgba(125,155,205,.06) 0 1px,transparent 1px 34px),
+      repeating-linear-gradient(90deg,rgba(125,155,205,.06) 0 1px,transparent 1px 34px),
+      radial-gradient(1000px 600px at 80% -12%,rgba(245,166,35,.09),transparent 55%),
+      linear-gradient(160deg,#0a0f16,#070a0f)}
+  .top{flex:none;display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line2);background:rgba(10,15,22,.75)}
+  .top h1{margin:0;font-size:15px;font-weight:700}
+  .top h1 span{color:var(--amber2)}
+  .badge{margin-left:auto;font-size:11px;color:var(--muted);border:1px solid var(--line2);border-radius:6px;padding:5px 10px}
+  .legend{display:flex;gap:16px;align-items:center;font-size:11.5px;color:var(--muted);padding:9px 18px;border-bottom:1px solid var(--line)}
+  .legend .it{display:flex;align-items:center;gap:7px}
+  .sw{width:20px;height:13px;border-radius:3px;display:inline-block}
+  .sw.p{background:#131d29;border:1px solid #2a3b52;border-left:4px solid var(--amber)}
+  .sw.d{background:#141f30;border:1px solid #3a4d68}
+  .sw.q{background:#1b2740;border:1px solid var(--amber);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+  .wrap{flex:1;min-height:0;overflow:auto;padding:22px}
+  #dg{display:block}
+  .foot{flex:none;display:flex;align-items:center;gap:16px;padding:8px 18px;border-top:1px solid var(--line2);background:rgba(10,15,22,.75);font-size:11.5px;color:var(--muted)}
+  .foot b{color:var(--amber2)}
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>Mónica 9 — <span>Diagrama de Inventario</span></h1>
+    <span class="badge">Flujograma por carriles · flujo de facturas y pago a proveedores</span>
+  </div>
+  <div class="legend">
+    <span class="it"><span class="sw p"></span> Proceso</span>
+    <span class="it"><span class="sw q"></span> Decisión</span>
+    <span class="it"><span class="sw d"></span> Documento</span>
+    <span class="it">El flujo se inicia en el proveedor, continúa en administración y finaliza con aprobación (gerencia) y registro (contabilidad).</span>
+  </div>
+  <div class="wrap"><div id="dg"></div></div>
+  <div class="foot"><span>Total de pasos: <b>14</b></span><span>Moneda: Córdobas (C$) · US$ 1 = C$ 19.960</span></div>
+
+<script>
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const LANES = [
+  {id:'proveedor',    label:'PROVEEDOR',      h:150},
+  {id:'admin',        label:'ADMINISTRACIÓN', h:240},
+  {id:'gerencia',     label:'GERENCIA',       h:150},
+  {id:'contabilidad', label:'CONTABILIDAD',   h:150}
+];
+
+const NODES = [
+  {id:'P1', lane:'proveedor',    type:'proc', w:230, lines:['Envío de facturas de Proveedores','por email o físicamente']},
+  {id:'P2', lane:'proveedor',    type:'doc',  w:150, lines:['FACTURA']},
+  {id:'A1', lane:'admin',        type:'proc', w:235, lines:['Revisión y aceptación de las','facturas y de la remesa']},
+  {id:'D1', lane:'admin',        type:'dec',  w:245, lines:['¿LA FACTURA SE PAGA','POR CONFIRMING?']},
+  {id:'A2', lane:'admin',        type:'proc', w:245, lines:['Revisión de la carta de pago','(importes y proveedores)']},
+  {id:'A3', lane:'admin',        type:'proc', w:275, lines:['Elaboración de una relación de pagos']},
+  {id:'D2', lane:'admin',        type:'dec',  w:215, lines:['POR TRANSFERENCIA?']},
+  {id:'A4', lane:'admin',        type:'proc', w:260, lines:['Emisión de la carta/orden de pago']},
+  {id:'A5', lane:'admin',        type:'proc', w:355, lines:['Envío de ficheros al banco para hacer transferencia']},
+  {id:'A6', lane:'admin',        type:'proc', w:210, lines:['Seguimiento y control']},
+  {id:'A7', lane:'admin',        type:'doc',  w:190, lines:['Archivo de Facturas']},
+  {id:'G1', lane:'gerencia',     type:'proc', w:270, lines:['Aprobación de la relación de pagos']},
+  {id:'C1', lane:'contabilidad', type:'proc', w:260, lines:['Registro contable de facturas y pagos']},
+  {id:'C2', lane:'contabilidad', type:'proc', w:210, lines:['Conciliación bancaria']}
+];
+const MAIN = ['P1','P2','A1','D1','A2','A3','D2','A4','A5','A6','A7'];
+const byId = {}; NODES.forEach(n=>byId[n.id]=n);
+
+function textSVG(lines, cx, cy, fill, weight){
+  const lh = 15, y0 = cy - (lines.length-1)*lh/2 + 5;
+  return '<text x="'+cx+'" y="'+y0+'" text-anchor="middle" fill="'+fill+'" font-size="12" font-weight="'+(weight||'400')+'" font-family="Segoe UI,Tahoma,sans-serif">'+
+    lines.map((l,i)=>'<tspan x="'+cx+'" dy="'+(i?lh:0)+'">'+esc(l)+'</tspan>').join('')+'</text>';
+}
+function nodeSVG(n){
+  if(n.type==='dec'){
+    const pts=[n.cx, n.y, n.x+n.w, n.cy, n.cx, n.y+n.h, n.x, n.cy].join(' ');
+    return '<polygon points="'+pts+'" fill="#1b2740" stroke="#f5a623" stroke-width="1.6"/>'+ textSVG(n.lines,n.cx,n.cy,'#ffc45c','700');
+  }
+  if(n.type==='doc'){
+    const k=18;
+    let s='<path d="M'+n.x+' '+n.y+' H'+(n.x+n.w-k)+' L'+(n.x+n.w)+' '+(n.y+k)+' V'+(n.y+n.h)+' H'+n.x+' Z" fill="#141f30" stroke="#3a4d68" stroke-width="1.4"/>';
+    s+='<path d="M'+(n.x+n.w-k)+' '+n.y+' V'+(n.y+k)+' H'+(n.x+n.w)+'" fill="none" stroke="#3a4d68" stroke-width="1.4"/>';
+    return s + textSVG(n.lines,n.cx,n.cy,'#e7eef7','600');
+  }
+  let s='<rect x="'+n.x+'" y="'+n.y+'" width="'+n.w+'" height="'+n.h+'" rx="9" fill="#131d29" stroke="#2a3b52" stroke-width="1.4"/>';
+  s+='<rect x="'+n.x+'" y="'+n.y+'" width="4" height="'+n.h+'" rx="2" fill="#f5a623" opacity="0.85"/>';
+  return s + textSVG(n.lines,n.cx,n.cy,'#e7eef7','600');
+}
+
+function render(){
+  let y=60; LANES.forEach(l=>{ l.y0=y; l.y1=y+l.h; l.cy=(l.y0+l.y1)/2; y+=l.h; });
+  const H=y+24, labelW=170, startX=195, gap=54;
+
+  let cx=startX;
+  MAIN.forEach(id=>{ const n=byId[id], L=LANES.find(l=>l.id===n.lane);
+    n.h = n.type==='dec' ? 120 : 74;
+    n.x=cx; n.y=L.cy-n.h/2; n.cx=cx+n.w/2; n.cy=L.cy; cx+=n.w+gap; });
+
+  const A3=byId.A3, A4=byId.A4, A5=byId.A5, G=byId.G1, C1=byId.C1, C2=byId.C2;
+  const gL=LANES.find(l=>l.id==='gerencia'), cL=LANES.find(l=>l.id==='contabilidad');
+  G.h=74; G.cx=A3.cx; G.x=G.cx-G.w/2; G.y=gL.cy-G.h/2; G.cy=gL.cy;
+  C1.h=74; C1.cx=A5.cx; C1.x=C1.cx-C1.w/2; C1.y=cL.cy-C1.h/2; C1.cy=cL.cy;
+  C2.h=74; C2.x=C1.x+C1.w+72; C2.y=cL.cy-C2.h/2; C2.cx=C2.x+C2.w/2; C2.cy=cL.cy;
+
+  const W = Math.max(cx+40, C2.x+C2.w+50, 1200);
+
+  const defs='<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8fa6c2"/></marker></defs>';
+  let lanes='';
+  LANES.forEach((l,i)=>{
+    lanes+='<rect x="0" y="'+l.y0+'" width="'+W+'" height="'+l.h+'" fill="'+(i%2?'rgba(255,255,255,.018)':'rgba(255,255,255,.035)')+'"/>';
+    lanes+='<rect x="0" y="'+l.y0+'" width="'+labelW+'" height="'+l.h+'" fill="rgba(245,166,35,.06)"/>';
+    lanes+='<line x1="0" y1="'+l.y0+'" x2="'+W+'" y2="'+l.y0+'" stroke="#1c2836"/>';
+    lanes+='<line x1="'+labelW+'" y1="'+l.y0+'" x2="'+labelW+'" y2="'+l.y1+'" stroke="#1c2836"/>';
+    lanes+='<text x="18" y="'+(l.cy+4)+'" fill="#f5a623" font-size="13" font-weight="700" font-family="Segoe UI,Tahoma,sans-serif" letter-spacing="0.5">'+esc(l.label)+'</text>';
+  });
+
+  const arrow = d => '<path d="'+d+'" fill="none" stroke="#8fa6c2" stroke-width="1.8" marker-end="url(#ah)"/>';
+  const edgeLabel = (x,ty) => '<g><rect x="'+(x-4)+'" y="'+(ty-13)+'" width="0" height="0" fill="none"/>';
+  let e='';
+  // P1 -> P2
+  e+=arrow('M'+(byId.P1.x+byId.P1.w)+' '+byId.P1.cy+' H'+byId.P2.x);
+  // P2 -> A1 (baJa de carril)
+  const sx=byId.P2.x+byId.P2.w, sy=byId.P2.cy, tx=byId.A1.x, ty=byId.A1.cy, mid=(sx+tx)/2;
+  e+=arrow('M'+sx+' '+sy+' H'+mid+' V'+ty+' H'+tx);
+  // A1 -> D1
+  e+=arrow('M'+(byId.A1.x+byId.A1.w)+' '+byId.A1.cy+' H'+byId.D1.x);
+  // D1 -> A2
+  e+=arrow('M'+(byId.D1.x+byId.D1.w)+' '+byId.D1.cy+' H'+byId.A2.x);
+  e+='<text x="'+((byId.D1.x+byId.D1.w+byId.A2.x)/2)+'" y="'+(byId.D1.cy-10)+'" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700" font-family="Segoe UI,Tahoma,sans-serif">Sí</text>';
+  // A2 -> A3
+  e+=arrow('M'+(byId.A2.x+byId.A2.w)+' '+byId.A2.cy+' H'+byId.A3.x);
+  // A3 -> D2
+  e+=arrow('M'+(byId.A3.x+byId.A3.w)+' '+byId.A3.cy+' H'+byId.D2.x);
+  // D2 -> A4
+  e+=arrow('M'+(byId.D2.x+byId.D2.w)+' '+byId.D2.cy+' H'+byId.A4.x);
+  e+='<text x="'+((byId.D2.x+byId.D2.w+byId.A4.x)/2)+'" y="'+(byId.D2.cy-10)+'" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700" font-family="Segoe UI,Tahoma,sans-serif">Sí</text>';
+  // A4 -> A5
+  e+=arrow('M'+(byId.A4.x+byId.A4.w)+' '+byId.A4.cy+' H'+byId.A5.x);
+  // A5 -> A6
+  e+=arrow('M'+(byId.A5.x+byId.A5.w)+' '+byId.A5.cy+' H'+byId.A6.x);
+  // A6 -> A7
+  e+=arrow('M'+(byId.A6.x+byId.A6.w)+' '+byId.A6.cy+' H'+byId.A7.x);
+  // A3 -> G1 (Aprobación)
+  e+=arrow('M'+A3.cx+' '+(A3.y+A3.h)+' V'+G.y);
+  e+='<text x="'+(A3.cx+9)+'" y="'+((A3.y+A3.h+G.y)/2)+'" fill="#ffc45c" font-size="11" font-weight="600" font-family="Segoe UI,Tahoma,sans-serif">Solicitud de aprobación</text>';
+  // G1 -> A4 (Autorizada)
+  e+=arrow('M'+(G.x+G.w)+' '+G.cy+' H'+A4.cx+' V'+(A4.y+A4.h));
+  e+='<text x="'+(A4.cx+9)+'" y="'+(G.cy-8)+'" fill="#ffc45c" font-size="11" font-weight="600" font-family="Segoe UI,Tahoma,sans-serif">Autorizada</text>';
+  // A5 -> C1 (Registro contable)
+  e+=arrow('M'+A5.cx+' '+(A5.y+A5.h)+' V'+C1.y);
+  e+='<text x="'+(A5.cx+9)+'" y="'+((A5.y+A5.h+C1.y)/2)+'" fill="#7f93ac" font-size="11" font-weight="600" font-family="Segoe UI,Tahoma,sans-serif">Registro contable</text>';
+  // C1 -> C2
+  e+=arrow('M'+(C1.x+C1.w)+' '+C1.cy+' H'+C2.x);
+
+  let nodes=''; NODES.forEach(n=> nodes+=nodeSVG(n));
+
+  const svg='<svg id="svgd" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'+
+    defs + lanes + e + nodes + '</svg>';
+  document.getElementById('dg').innerHTML = svg;
+}
+render();
+</script>
+</body>
+</html>

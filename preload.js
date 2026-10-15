@@ -1,4 +1,19 @@
-<<<<<<< HEAD
+const { contextBridge, ipcRenderer } = require('electron');
+
+const api = Object.freeze({
+  crearCuentaPorCobrar: (datos) => ipcRenderer.invoke('cxc:crear', datos),
+  listarCuentasPorCobrar: () => ipcRenderer.invoke('cxc:listar'),
+  actualizarEstadoCuenta: (id, estado) => ipcRenderer.invoke('cxc:actualizar-estado', { id, estado }),
+  abonarCuenta: (id, monto) => ipcRenderer.invoke('cxc:abonar', { id, monto }),
+
+  crearProducto: (datos) => ipcRenderer.invoke('inv:crear', datos),
+  listarProductos: () => ipcRenderer.invoke('inv:listar'),
+  actualizarProducto: (codigo, datos) => ipcRenderer.invoke('inv:actualizar', { codigo, datos }),
+  eliminarProducto: (codigo) => ipcRenderer.invoke('inv:eliminar', codigo),
+  seedProductos: (lista) => ipcRenderer.invoke('inv:seed', lista)
+});
+
+contextBridge.exposeInMainWorld('api', api);
 "use strict";
 
 const { contextBridge, ipcRenderer } = require("electron");
@@ -22,7 +37,6 @@ contextBridge.exposeInMainWorld("api", {
   guardarPreferencia: (clave, valor) =>
     ipcRenderer.invoke("preferencias:guardar", { clave, valor })
 });
-=======
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
@@ -41,4 +55,4 @@ contextBridge.exposeInMainWorld('api', {
   guardarCxP: (datos) => ipcRenderer.invoke('cxp:guardar', datos),
   eliminarCxP: (id) => ipcRenderer.invoke('cxp:eliminar', id)
 });
->>>>>>> e075c6cc744bc1199a369dc263fe9e0ce334e795
+
