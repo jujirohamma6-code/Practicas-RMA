@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>MÓDULO CLIENTES Y PROVEEDORES - Mónica 9</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background-color: #cce0ff; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 98vh; }
+    .container { background: #e6f0fa; border: 2px solid #fff; border-radius: 4px; padding: 12px; width: 100%; max-width: 1050px; height: 92vh; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 2px 2px 8px rgba(0,0,0,0.2); }
+    
+    .header-title { font-size: 1.1rem; font-weight: bold; color: #000066; border-bottom: 2px solid #99c2ff; padding-bottom: 8px; margin-bottom: 12px; }
+
+    .content-box { background: #fff; flex-grow: 1; margin: 10px 0; border: 1px solid #99c2ff; padding: 15px; overflow-y: auto; border-radius: 4px; position: relative; }
+    
+    .action-bar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; background: #cce0ff; padding: 8px; border: 1px solid #99c2ff; border-radius: 4px; }
+    .action-btn { background: #f0f4f8; border: 1px solid #7799cc; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; font-weight: bold; color: #000066; }
+    .action-btn:hover { background: #e0ecff; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; cursor: pointer; }
+    th { background: #f0f4f8; color: #000066; }
+    tr.selected { background-color: #d0e1fd !important; }
+
+    /* Modales flotantes interactivos */
+    .modal-flotante {
+      display: none;
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #f0f4f8;
+      border: 2px solid #000066;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+      width: 350px;
+      z-index: 10;
+    }
+    .modal-flotante h3 { font-size: 1rem; color: #000066; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    .modal-flotante label { font-size: 0.8rem; font-weight: bold; display: block; margin-top: 6px; color: #333; }
+    .modal-flotante input { width: 100%; padding: 6px; margin-top: 2px; border: 1px solid #99c2ff; border-radius: 3px; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-title">Módulo de Clientes y Proveedores</div>
+    
+    <div class="content-box">
+      <!-- Modal: Nuevo Cliente / Proveedor -->
+      <div id="modal-nuevo" class="modal-flotante">
+        <h3>Nuevo Tercero</h3>
+        <label>Nombre / Empresa:</label>
+        <input type="text" id="input-nombre" placeholder="Ej. DISTRIBUIDORA SUR">
+        <label>Saldo Inicial C$:</label>
+        <input type="number" id="input-saldo" placeholder="0.00">
+        <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="action-btn" onclick="guardarCliente()">Guardar</button>
+          <button class="action-btn" onclick="cerrarModales()" style="background: #ffcccc; color: #990000;">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Modal: Modificar Cliente -->
+      <div id="modal-modificar" class="modal-flotante">
+        <h3>Modificar Tercero Seleccionado</h3>
+        <label>Nombre:</label>
+        <input type="text" id="mod-nombre">
+        <label>Saldo C$:</label>
+        <input type="number" id="mod-saldo">
+        <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="action-btn" onclick="actualizarCliente()">Actualizar</button>
+          <button class="action-btn" onclick="cerrarModales()" style="background: #ffcccc; color: #990000;">Cancelar</button>
+        </div>
+      </div>
+
+      <p style="font-weight: bold; margin-bottom: 10px; color: #333;">Listado General de Terceros (Haz clic en una fila para seleccionarla)</p>
+      <table id="tabla-clientes">
+        <tr>
+          <th>Nombre del Tercero / Empresa</th>
+          <th style="text-align: right;">Saldo Actual C$</th>
+        </tr>
+        <tr onclick="seleccionarFila(this)">
+          <td>DOUGLAS MONTENEGRO</td>
+          <td style="text-align: right;">0.00</td>
+        </tr>
+        <tr onclick="seleccionarFila(this)">
+          <td>WALMART NICARAGUA</td>
+          <td style="text-align: right;">150,000.00</td>
+        </tr>
+        <tr onclick="seleccionarFila(this)">
+          <td>DISTRIBUIDORA SANTA ANA</td>
+          <td style="text-align: right;">50,000.00</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Barra de Botones Inferior -->
+    <div class="action-bar">
+      <button class="action-btn" onclick="abrirModal('modal-nuevo')">Nuevo</button>
+      <button class="action-btn" onclick="abrirModificar()">Modificar</button>
+      <button class="action-btn" onclick="eliminarClienteSeleccionado()">Eliminar</button>
+      <button class="action-btn" onclick="alert('Generando listado impreso de terceros...')">Imprimir</button>
+      <button class="action-btn" onclick="window.location.href='index.html'" style="background: #ffcccc; color: #990000;">Salir</button>
+    </div>
+  </div>
+
+  <script>
+    let filaSeleccionada = null;
+
+    function seleccionarFila(fila) {
+      document.querySelectorAll('#tabla-clientes tr').forEach(r => r.classList.remove('selected'));
+      fila.classList.add('selected');
+      filaSeleccionada = fila;
+    }
+
+    function abrirModal(id) {
+      cerrarModales();
+      document.getElementById(id).style.display = 'block';
+    }
+
+    function cerrarModales() {
+      document.querySelectorAll('.modal-flotante').forEach(m => m.style.display = 'none');
+    }
+
+    function guardarCliente() {
+      const nombre = document.getElementById('input-nombre').value;
+      const saldo = document.getElementById('input-saldo').value;
+
+      if (!nombre || !saldo) {
+        alert('Por favor complete todos los campos.');
+        return;
+      }
+
+      const tabla = document.getElementById('tabla-clientes');
+      const nuevaFila = tabla.insertRow();
+      nuevaFila.onclick = function() { seleccionarFila(this); };
+      nuevaFila.innerHTML = `
+        <td>${nombre.toUpperCase()}</td>
+        <td style="text-align: right;">${Number(saldo).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+      `;
+
+      cerrarModales();
+      document.getElementById('input-nombre').value = '';
+      document.getElementById('input-saldo').value = '';
+      alert('¡Tercero registrado con éxito!');
+    }
+
+    function abrirModificar() {
+      if (!filaSeleccionada) {
+        alert('Por favor, haga clic en un cliente de la tabla para seleccionarlo primero.');
+        return;
+      }
+      document.getElementById('mod-nombre').value = filaSeleccionada.cells[0].innerText;
+      document.getElementById('mod-saldo').value = filaSeleccionada.cells[1].innerText.replace(/,/g, '');
+      abrirModal('modal-modificar');
+    }
+
+    function actualizarCliente() {
+      if (!filaSeleccionada) return;
+      const nuevoNombre = document.getElementById('mod-nombre').value;
+      const nuevoSaldo = document.getElementById('mod-saldo').value;
+
+      filaSeleccionada.cells[0].innerText = nuevoNombre.toUpperCase();
+      filaSeleccionada.cells[1].innerText = Number(nuevoSaldo).toLocaleString('en-US', {minimumFractionDigits: 2});
+      
+      cerrarModales();
+      alert('¡Información del tercero actualizada con éxito!');
+    }
+
+    function eliminarClienteSeleccionado() {
+      if (!filaSeleccionada) {
+        alert('Seleccione un cliente de la tabla haciendo clic sobre él para eliminarlo.');
+        return;
+      }
+      if (confirm(`¿Está seguro de eliminar a ${filaSeleccionada.cells[0].innerText}?`)) {
+        filaSeleccionada.remove();
+        filaSeleccionada = null;
+        alert('Cliente eliminado correctamente.');
+      }
+    }
+  </script>
+</body>
+</html>

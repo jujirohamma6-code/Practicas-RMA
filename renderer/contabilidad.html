@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>MÓDULO CONTABILIDAD - Mónica 9</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background-color: #cce0ff; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 98vh; }
+    .container { background: #e6f0fa; border: 2px solid #fff; border-radius: 4px; padding: 12px; width: 100%; max-width: 1050px; height: 92vh; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 2px 2px 8px rgba(0,0,0,0.2); }
+    .tabs { display: flex; gap: 4px; border-bottom: 2px solid #99c2ff; padding-bottom: 5px; flex-wrap: wrap; }
+    .tab { background: #f0f4f8; border: 1px solid #99c2ff; padding: 6px 12px; font-size: 0.85rem; cursor: pointer; font-weight: bold; color: #000066; border-radius: 3px 3px 0 0; }
+    .tab:hover { background: #e0ecff; }
+    .tab.active { background: #ffffff; border-bottom: 2px solid #ffffff; color: #000; }
+    .content-box { background: #fff; flex-grow: 1; margin: 10px 0; border: 1px solid #99c2ff; padding: 15px; overflow-y: auto; border-radius: 4px; position: relative; }
+    .action-bar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; background: #cce0ff; padding: 8px; border: 1px solid #99c2ff; border-radius: 4px; }
+    .action-btn { background: #f0f4f8; border: 1px solid #7799cc; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; font-weight: bold; color: #000066; }
+    .action-btn:hover { background: #e0ecff; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0; cursor: pointer; }
+    th { background: #f0f4f8; color: #000066; }
+    tr.selected { background-color: #d0e1fd !important; }
+
+    /* Modales flotantes interactivos */
+    .modal-flotante {
+      display: none;
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #f0f4f8;
+      border: 2px solid #000066;
+      padding: 15px;
+      border-radius: 6px;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+      width: 350px;
+      z-index: 10;
+    }
+    .modal-flotante h3 { font-size: 1rem; color: #000066; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    .modal-flotante label { font-size: 0.8rem; font-weight: bold; display: block; margin-top: 6px; color: #333; }
+    .modal-flotante input { width: 100%; padding: 6px; margin-top: 2px; border: 1px solid #99c2ff; border-radius: 3px; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Pestañas Superiores -->
+    <div class="tabs">
+      <div class="tab" onclick="cambiarVista('plan', this)">Plan de Cuentas</div>
+      <div class="tab" onclick="cambiarVista('cierre', this)">Cierre del periodo</div>
+      <div class="tab" onclick="cambiarVista('enlace', this)">Cuentas de enlace</div>
+      <div class="tab active" onclick="cambiarVista('diario', this)">Diario General</div>
+      <div class="tab" onclick="cambiarVista('mayor', this)">Libro Mayor</div>
+      <div class="tab" onclick="cambiarVista('auxiliares', this)">Libros Auxiliares</div>
+      <div class="tab" onclick="cambiarVista('varios', this)">Varios</div>
+      <div class="tab" onclick="cambiarVista('reportes', this)">Reportes</div>
+    </div>
+    
+    <!-- Contenedor Dinámico -->
+    <div class="content-box" id="contenido-dinamico">
+      
+      <!-- Modal: Crear Asiento -->
+      <div id="modal-crear" class="modal-flotante">
+        <h3>Nuevo Asiento Contable</h3>
+        <label>Cuenta:</label>
+        <input type="text" id="input-cuenta" placeholder="Ej. LUZ Y AGUA">
+        <label>Monto Débito C$:</label>
+        <input type="number" id="input-monto" placeholder="0.00">
+        <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="action-btn" onclick="guardarAsiento()">Guardar</button>
+          <button class="action-btn" onclick="cerrarModales()" style="background: #ffcccc; color: #990000;">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Modal: Modificar Asiento -->
+      <div id="modal-modificar" class="modal-flotante">
+        <h3>Modificar Asiento Seleccionado</h3>
+        <label>Nueva Cuenta:</label>
+        <input type="text" id="mod-cuenta" placeholder="Nombre de cuenta">
+        <label>Nuevo Monto C$:</label>
+        <input type="number" id="mod-monto" placeholder="0.00">
+        <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="action-btn" onclick="actualizarAsiento()">Actualizar</button>
+          <button class="action-btn" onclick="cerrarModales()" style="background: #ffcccc; color: #990000;">Cancelar</button>
+        </div>
+      </div>
+
+      <div id="tabla-container">
+        <p style="font-weight: bold; margin-bottom: 8px; font-size: 0.9rem;">- Diario General (Haz clic en una fila para seleccionarla) -</p>
+        <table id="tabla-asientos">
+          <tr>
+            <th>No Asiento</th>
+            <th>Fecha</th>
+            <th>Libro</th>
+            <th>Cuenta</th>
+            <th style="text-align: right;">Débito C$</th>
+            <th style="text-align: right;">Crédito C$</th>
+          </tr>
+          <tr onclick="seleccionarFila(this)">
+            <td>1</td>
+            <td>15/10/2026</td>
+            <td>ASIE</td>
+            <td>TELÉFONOS</td>
+            <td style="text-align: right;">3,000.00</td>
+            <td style="text-align: right;"></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Barra de Botones Inferior -->
+    <div class="action-bar">
+      <button class="action-btn" onclick="abrirModal('modal-crear')">Crear Asiento</button>
+      <button class="action-btn" onclick="abrirModificar()">Modificar</button>
+      <button class="action-btn" onclick="anularAsientoSeleccionado()">Anular</button>
+      <button class="action-btn" onclick="eliminarFilaSeleccionada()">Eliminar</button>
+      <button class="action-btn" onclick="verDetalleAsiento()">Ver Asiento</button>
+      <button class="action-btn" onclick="alert('Generando reporte del diario general...')">Reporte Diario</button>
+      <button class="action-btn" onclick="window.location.href='index.html'" style="background: #ffcccc; color: #990000;">Salir</button>
+    </div>
+  </div>
+
+  <script>
+    let filaSeleccionada = null;
+
+    function cambiarVista(seccion, elementoTab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      elementoTab.classList.add('active');
+
+      const caja = document.getElementById('contenido-dinamico');
+
+      if (seccion === 'plan') {
+        caja.innerHTML = `
+          <p style="font-weight: bold; margin-bottom: 8px; font-size: 0.9rem;">- Plan de Cuentas Activo -</p>
+          <table>
+            <tr><th>Código</th><th>Nombre de Cuenta</th><th>Tipo</th></tr>
+            <tr><td>1.2-3-05</td><td>TELÉFONOS</td><td>Gasto</td></tr>
+            <tr><td>2.11-01</td><td>COMERCIAL LAURA</td><td>Pasivo</td></tr>
+          </table>`;
+      } else if (seccion === 'diario') {
+        caja.innerHTML = `
+          <div id="modal-crear" class="modal-flotante">
+            <h3>Nuevo Asiento Contable</h3>
+            <label>Cuenta:</label><input type="text" id="input-cuenta" placeholder="Ej. LUZ Y AGUA">
+            <label>Monto Débito C$:</label><input type="number" id="input-monto" placeholder="0.00">
+            <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+              <button class="action-btn" onclick="guardarAsiento()">Guardar</button>
+              <button class="action-btn" onclick="cerrarModales()" style="background:#ffcccc; color:#990000;">Cancelar</button>
+            </div>
+          </div>
+          <div id="modal-modificar" class="modal-flotante">
+            <h3>Modificar Asiento Seleccionado</h3>
+            <label>Nueva Cuenta:</label><input type="text" id="mod-cuenta">
+            <label>Nuevo Monto C$:</label><input type="number" id="mod-monto">
+            <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+              <button class="action-btn" onclick="actualizarAsiento()">Actualizar</button>
+              <button class="action-btn" onclick="cerrarModales()" style="background:#ffcccc; color:#990000;">Cancelar</button>
+            </div>
+          </div>
+          <div id="tabla-container">
+            <p style="font-weight: bold; margin-bottom: 8px; font-size: 0.9rem;">- Diario General (Haz clic en una fila para seleccionarla) -</p>
+            <table id="tabla-asientos">
+              <tr><th>No Asiento</th><th>Fecha</th><th>Libro</th><th>Cuenta</th><th style="text-align: right;">Débito C$</th><th style="text-align: right;">Crédito C$</th></tr>
+              <tr onclick="seleccionarFila(this)"><td>1</td><td>15/10/2026</td><td>ASIE</td><td>TELÉFONOS</td><td style="text-align: right;">3,000.00</td><td style="text-align: right;"></td></tr>
+            </table>
+          </div>`;
+      } else {
+        caja.innerHTML = `<p style="padding: 30px; text-align: center; color: #555; font-size: 1rem;">Módulo de <strong>${seccion.toUpperCase()}</strong> cargado correctamente.</p>`;
+      }
+    }
+
+    function abrirModal(id) {
+      cerrarModales();
+      document.getElementById(id).style.display = 'block';
+    }
+
+    function cerrarModales() {
+      document.querySelectorAll('.modal-flotante').forEach(m => m.style.display = 'none');
+    }
+
+    function seleccionarFila(fila) {
+      document.querySelectorAll('#tabla-asientos tr').forEach(r => r.classList.remove('selected'));
+      fila.classList.add('selected');
+      filaSeleccionada = fila;
+    }
+
+    function guardarAsiento() {
+      const cuenta = document.getElementById('input-cuenta').value;
+      const monto = document.getElementById('input-monto').value;
+      if (!cuenta || !monto) { alert('Complete los campos.'); return; }
+
+      const tabla = document.getElementById('tabla-asientos');
+      const nuevaFila = tabla.insertRow();
+      nuevaFila.onclick = function() { seleccionarFila(this); };
+      nuevaFila.innerHTML = `<td>${tabla.rows.length - 1}</td><td>15/10/2026</td><td>ASIE</td><td>${cuenta.toUpperCase()}</td><td style="text-align: right;">${Number(monto).toLocaleString('en-US', {minimumFractionDigits: 2})}</td><td style="text-align: right;"></td>`;
+      
+      cerrarModales();
+      document.getElementById('input-cuenta').value = '';
+      document.getElementById('input-monto').value = '';
+      alert('¡Asiento creado con éxito!');
+    }
+
+    function abrirModificar() {
+      if (!filaSeleccionada) {
+        alert('Por favor, haga clic en una fila de la tabla para seleccionarla primero.');
+        return;
+      }
+      document.getElementById('mod-cuenta').value = filaSeleccionada.cells[3].innerText;
+      document.getElementById('mod-monto').value = filaSeleccionada.cells[4].innerText.replace(/,/g, '');
+      abrirModal('modal-modificar');
+    }
+
+    function actualizarAsiento() {
+      if (!filaSeleccionada) return;
+      const nuevaCuenta = document.getElementById('mod-cuenta').value;
+      const nuevoMonto = document.getElementById('mod-monto').value;
+
+      filaSeleccionada.cells[3].innerText = nuevaCuenta.toUpperCase();
+      filaSeleccionada.cells[4].innerText = Number(nuevoMonto).toLocaleString('en-US', {minimumFractionDigits: 2});
+      cerrarModales();
+      alert('¡Asiento modificado correctamente!');
+    }
+
+    function eliminarFilaSeleccionada() {
+      if (!filaSeleccionada) {
+        alert('Seleccione un asiento de la tabla haciendo clic sobre él para eliminarlo.');
+        return;
+      }
+      if (confirm('¿Está seguro de eliminar este asiento?')) {
+        filaSeleccionada.remove();
+        filaSeleccionada = null;
+        alert('Asiento eliminado.');
+      }
+    }
+
+    function anularAsientoSeleccionado() {
+      if (!filaSeleccionada) {
+        alert('Seleccione un asiento de la tabla para anular.');
+        return;
+      }
+      filaSeleccionada.style.textDecoration = 'line-through';
+      filaSeleccionada.style.color = 'red';
+      alert('Asiento marcado como ANULADO.');
+    }
+
+    function verDetalleAsiento() {
+      if (!filaSeleccionada) {
+        alert('Seleccione un asiento para ver su detalle.');
+        return;
+      }
+      alert(`Detalle del Asiento:\nCuenta: ${filaSeleccionada.cells[3].innerText}\nMonto: C$ ${filaSeleccionada.cells[4].innerText}\nEstado: Activo`);
+    }
+  </script>
+</body>
+</html>

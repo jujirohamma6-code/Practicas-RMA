@@ -1,265 +1,73 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-const crypto = require('crypto');
-const Database = require('better-sqlite3');
+const sqlite3 = require('sqlite3').verbose();
 
-const dbPath = path.join(app.getPath('userData'), 'contabilidad.db');
-const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-db.exec(`
-  CREATE TABLE IF NOT EXISTS cuentas_por_cobrar (
-    id TEXT PRIMARY KEY,
-    factura TEXT NOT NULL,
-    cliente TEXT NOT NULL,
-    monto REAL NOT NULL DEFAULT 0,
-    abonado REAL NOT NULL DEFAULT 0,
+let mainWindow;
+
+// Inicialización de la base de datos SQLite
+const dbPath = path.join(__dirname, 'monica.db');
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('Error al abrir la base de datos', err.message);
+  } else {
+    console.log('Conectado a la base de datos SQLite.');
+  }
+});
+
+// Creación de tablas por defecto si no existen
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS cuentas_por_cobrar (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo TEXT,
+    cliente TEXT,
+    factura TEXT,
+    fecha TEXT,
     vencimiento TEXT,
-    estado TEXT NOT NULL DEFAULT 'Pendiente'
-  )
-`);
-db.exec(`
-  CREATE TABLE IF NOT EXISTS productos (
-    codigo TEXT PRIMARY KEY,
-    nombre TEXT NOT NULL,
+    monto REAL,
+    saldo REAL,
+    estado TEXT DEFAULT 'PENDIENTE'
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS productos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo TEXT UNIQUE,
+    nombre TEXT,
     categoria TEXT,
-    bodega TEXT,
-    costo REAL NOT NULL DEFAULT 0,
-    precio REAL NOT NULL DEFAULT 0,
-    existencia REAL NOT NULL DEFAULT 0,
-    minimo REAL NOT NULL DEFAULT 0
-  )
-`);
+    costo REAL,
+    precio REAL,
+    existencia INTEGER,
+    min_stock INTEGER DEFAULT 5,
+    max_stock INTEGER DEFAULT 100
+  )`);
 
-const stmts = {
-  insert: db.prepare('INSERT INTO cuentas_por_cobrar (id, factura, cliente, monto, abonado, vencimiento, estado) VALUES (@id, @factura, @cliente, @monto, @abonado, @vencimiento, @estado)'),
-  getAll: db.prepare('SELECT id, factura, cliente, monto, abonado, vencimiento, estado FROM cuentas_por_cobrar ORDER BY vencimiento ASC'),
-  get: db.prepare('SELECT id, factura, cliente, monto, abonado, vencimiento, estado FROM cuentas_por_cobrar WHERE id = ?'),
-  updateEstado: db.prepare('UPDATE cuentas_por_cobrar SET estado = @estado WHERE id = @id'),
-  updateAbonado: db.prepare('UPDATE cuentas_por_cobrar SET abonado = @abonado, estado = @estado WHERE id = @id')
-};
-
-const pstmts = {
-  insert: db.prepare('INSERT INTO productos (codigo, nombre, categoria, bodega, costo, precio, existencia, minimo) VALUES (@codigo, @nombre, @categoria, @bodega, @costo, @precio, @existencia, @minimo)'),
-  getAll: db.prepare('SELECT codigo, nombre, categoria, bodega, costo, precio, existencia, minimo FROM productos ORDER BY nombre ASC'),
-  get: db.prepare('SELECT codigo, nombre, categoria, bodega, costo, precio, existencia, minimo FROM productos WHERE codigo = ?'),
-  update: db.prepare('UPDATE productos SET nombre = @nombre, categoria = @categoria, bodega = @bodega, costo = @costo, precio = @precio, existencia = @existencia, minimo = @minimo WHERE codigo = @codigo'),
-  remove: db.prepare('DELETE FROM productos WHERE codigo = ?')
-};
-
-function toProducto(row) {
-  if (!row) return null;
-  return {
-    codigo: row.codigo,
-    nombre: row.nombre,
-    categoria: row.categoria,
-    bodega: row.bodega,
-    costo: row.costo,
-    precio: row.precio,
-    existencia: row.existencia,
-    minimo: row.minimo
-  };
-}
-
-function normalizarProducto(datos) {
-  const codigo = String((datos && datos.codigo) || '').trim();
-  const nombre = String((datos && datos.nombre) || '').trim();
-  const categoria = String((datos && datos.categoria) || '').trim();
-  const bodega = String((datos && datos.bodega) || '').trim();
-  const costo = Number(datos && datos.costo);
-  const precio = Number(datos && datos.precio);
-  const rawExistencia = datos ? datos.existencia : null;
-  const rawMinimo = datos ? datos.minimo : null;
-  const existencia = (rawExistencia == null || rawExistencia === '') ? 0 : Number(rawExistencia);
-  const minimo = (rawMinimo == null || rawMinimo === '') ? 0 : Number(rawMinimo);
-  if (!codigo) return { error: 'El código del producto es requerido.' };
-  if (!nombre) return { error: 'El nombre del producto es requerido.' };
-  if (!Number.isFinite(costo) || costo <= 0) return { error: 'El costo debe ser un número mayor que cero.' };
-  if (!Number.isFinite(precio) || precio <= 0) return { error: 'El precio de venta debe ser un número mayor que cero.' };
-  if (!Number.isFinite(existencia) || existencia < 0) return { error: 'La existencia no puede ser negativa.' };
-  if (!Number.isFinite(minimo) || minimo < 0) return { error: 'El mínimo no puede ser negativo.' };
-  return { data: { codigo, nombre, categoria, bodega, costo, precio, existencia, minimo } };
-}
-
-ipcMain.handle('inv:crear', (e, datos) => {
-  try {
-    const v = normalizarProducto(datos);
-    if (v.error) return { ok: false, error: v.error };
-    if (pstmts.get.get(v.data.codigo)) return { ok: false, error: 'Ya existe un producto con el código "' + v.data.codigo + '".' };
-    pstmts.insert.run(v.data);
-    return { ok: true, data: toProducto(pstmts.get.get(v.data.codigo)) };
-  } catch (error) {
-    return { ok: false, error: 'Error interno al guardar el producto.' };
-  }
+  db.run(`CREATE TABLE IF NOT EXISTS facturas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    numero TEXT,
+    cliente TEXT,
+    fecha TEXT,
+    subtotal REAL,
+    iva REAL,
+    total REAL
+  )`);
 });
-
-ipcMain.handle('inv:listar', () => {
-  try {
-    return pstmts.getAll.all().map(toProducto);
-  } catch (error) {
-    return [];
-  }
-});
-
-ipcMain.handle('inv:actualizar', (e, { codigo, datos } = {}) => {
-  try {
-    const key = String(codigo || '').trim();
-    if (!key) return { ok: false, error: 'Debe indicar el código del producto a actualizar.' };
-    if (!pstmts.get.get(key)) return { ok: false, error: 'El producto "' + key + '" no existe.' };
-    const v = normalizarProducto(Object.assign({}, datos, { codigo: key }));
-    if (v.error) return { ok: false, error: v.error };
-    pstmts.update.run(v.data);
-    return { ok: true, data: toProducto(pstmts.get.get(key)) };
-  } catch (error) {
-    return { ok: false, error: 'Error interno al actualizar el producto.' };
-  }
-});
-
-ipcMain.handle('inv:eliminar', (e, codigo) => {
-  try {
-    const key = String(codigo || '').trim();
-    if (!key) return { ok: false, error: 'Debe indicar el código del producto a eliminar.' };
-    const res = pstmts.remove.run(key);
-    if (res.changes === 0) return { ok: false, error: 'El producto "' + key + '" no existe.' };
-    return { ok: true };
-  } catch (error) {
-    return { ok: false, error: 'Error interno al eliminar el producto.' };
-  }
-});
-
-ipcMain.handle('inv:seed', (e, lista) => {
-  try {
-    if (!Array.isArray(lista)) return { ok: false, error: 'Los datos de ejemplo no son válidos.' };
-    if (pstmts.getAll.all().length > 0) return { ok: true, data: { sembrados: 0 } };
-    const insertar = db.transaction((rows) => {
-      for (const r of rows) {
-        const codigo = String((r && r.codigo) || '').trim();
-        const nombre = String((r && r.nombre) || '').trim();
-        if (!codigo || !nombre) continue;
-        pstmts.insert.run({
-          codigo: codigo,
-          nombre: nombre,
-          categoria: String((r.categoria) || '').trim(),
-          bodega: String((r.bodega) || '').trim(),
-          costo: Number(r.costo) || 0,
-          precio: Number(r.precio) || 0,
-          existencia: Number(r.existencia) || 0,
-          minimo: Number(r.minimo) || 0
-        });
-      }
-    });
-    insertar(lista);
-    return { ok: true, data: { sembrados: pstmts.getAll.all().length } };
-  } catch (error) {
-    return { ok: false, error: 'Error interno al crear los datos de ejemplo.' };
-  }
-});
-
-function toRow(reg) {
-  if (!reg) return null;
-  return {
-    id: reg.id,
-    factura: reg.factura,
-    cliente: reg.cliente,
-    monto: reg.monto,
-    abono: reg.abonado,
-    fecha_vencimiento: reg.vencimiento,
-    estado: reg.estado
-  };
-}
-
-function estadoPara(abonado, monto) {
-  if (abonado >= monto) return 'Pagado';
-  if (abonado > 0) return 'Parcial';
-  return 'Pendiente';
-}
-
-function fechaOk(f) {
-  if (!f || typeof f !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(f)) return false;
-  const p = f.split('-');
-  const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
-  return d.getFullYear() === Number(p[0]) && d.getMonth() === Number(p[1]) - 1 && d.getDate() === Number(p[2]);
-}
-
-ipcMain.handle('cxc:crear', (e, datos) => {
-  try {
-    const numeroFactura = String((datos && datos.numeroFactura) || '').trim();
-    const cliente = String((datos && datos.cliente) || '').trim();
-    const monto = Number(datos && datos.monto);
-    const abono = Number(datos && datos.abono);
-    const vencimiento = String((datos && datos.fechaVencimiento) || '').trim();
-    if (!cliente) return { ok: false, error: 'El cliente no puede estar vacío.' };
-    if (!Number.isFinite(monto) || monto <= 0) return { ok: false, error: 'El monto debe ser un número mayor que cero.' };
-    if (!vencimiento) return { ok: false, error: 'La fecha de vencimiento no puede estar vacía.' };
-    if (!fechaOk(vencimiento)) return { ok: false, error: 'La fecha de vencimiento no es válida.' };
-    const abonado = Math.min(Number.isFinite(abono) && abono > 0 ? abono : 0, monto);
-    const id = crypto.randomUUID();
-    stmts.insert.run({
-      id, factura: numeroFactura || ('F-' + new Date().getFullYear() + '-' + String(id.slice(0, 8))),
-      cliente, monto, abonado, vencimiento, estado: estadoPara(abonado, monto)
-    });
-    return { ok: true, data: toRow(stmts.get.get(id)) };
-  } catch (error) {
-    return { ok: false, error: 'Error interno al guardar la cuenta.' };
-  }
-});
-
-ipcMain.handle('cxc:listar', () => {
-  try {
-    return stmts.getAll.all().map(toRow);
-  } catch (error) {
-    return [];
-  }
-});
-
-ipcMain.handle('cxc:actualizar-estado', (e, { id, estado }) => {
-  try {
-    if (!id || !estado) return false;
-    if (['Pendiente', 'Parcial', 'Pagado'].indexOf(estado) === -1) return false;
-    const res = stmts.updateEstado.run({ id, estado });
-    return res.changes > 0;
-  } catch (error) {
-    return false;
-  }
-});
-
-ipcMain.handle('cxc:abonar', (e, { id, monto }) => {
-  try {
-    if (!id) return { ok: false, error: 'Identificador de cuenta no válido.' };
-    const cantidad = Number(monto);
-    if (!Number.isFinite(cantidad) || cantidad <= 0) return { ok: false, error: 'El monto de abono debe ser un número mayor que cero.' };
-    const fila = stmts.get.get(id);
-    if (!fila) return { ok: false, error: 'La cuenta por cobrar no existe.' };
-    const nuevoAbonado = Math.min(Number(fila.abonado) + cantidad, Number(fila.monto));
-    stmts.updateAbonado.run({ id, abonado: nuevoAbonado, estado: estadoPara(nuevoAbonado, fila.monto) });
-    return { ok: true };
-  } catch (error) {
-    return { ok: false, error: 'Error interno al registrar el abono.' };
-  }
-});
-
-function vistaInicial() {
-  const arg = process.argv.find(a => a.startsWith('--vista='));
-  const vista = (arg ? arg.split('=')[1] : process.env.M9_VISTA) || 'inventario';
-  return vista === 'inventario' ? 'inventario.html' : 'cuentas_por_cobrar.html';
-}
 
 function createWindow() {
-  const win = new BrowserWindow({
-    width: 1280,
+  mainWindow = new BrowserWindow({
+    width: 1200,
     height: 800,
-    title: 'Mónica 9 · Gestión Contable',
-    backgroundColor: '#070a0f',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: true,
+      contextIsolation: false,
+      webSecurity: false
     }
   });
-  win.loadFile(vistaInicial());
+
+  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
 
 app.whenReady().then(() => {
   createWindow();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -268,233 +76,27 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
-"use strict";
 
-const path = require("path");
-const { app, BrowserWindow, ipcMain } = require("electron");
-const db = require("./db/database");
-
-let ventanaPrincipal = null;
-
-function crearVentana() {
-  ventanaPrincipal = new BrowserWindow({
-    width: 1280,
-    height: 840,
-    minWidth: 900,
-    minHeight: 620,
-    backgroundColor: "#0f172a",
-    autoHideMenuBar: true,
-    title: "MÓNICA 9 · Módulo Parámetros",
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: false
-    }
-  });
-
-  ventanaPrincipal.webContents.on("did-finish-load", () => {
-    console.log("Renderer cargado correctamente.");
-    if (process.env.MONICA_SMOKE_TEST === "1") {
-      console.log("SMOKE_OK");
-      setTimeout(() => app.quit(), 600);
-    }
-  });
-
-  ventanaPrincipal.webContents.on("did-fail-load", (_e, code, desc, url) => {
-    console.error("Fallo al cargar el renderer:", code, desc, url);
-  });
-
-  ventanaPrincipal.loadFile(
-    path.join(__dirname, "renderer", process.env.MONICA_SMOKE_PAGE || "index.html")
-  );
-}
-
-/** Registra todos los controladores IPC del módulo de parámetros. */
-function registrarIpc() {
-  ipcMain.handle("app:version", () => app.getVersion());
-  ipcMain.handle("db:ruta", () => db.rutaBase);
-
-  ipcMain.handle("parametros:leer", () => db.leerParametros());
-  ipcMain.handle("parametros:guardar", (_evt, payload) => db.guardarParametros(payload || {}));
-
-  ipcMain.handle("contadores:leer", () => db.leerContadores());
-  ipcMain.handle("contadores:actualizar", (_evt, { clave, valor }) =>
-    db.actualizarContador(clave, valor)
-  );
-
-  ipcMain.handle("preferencias:leer", (_evt, clave) => db.leerPreferencia(clave));
-  ipcMain.handle("preferencias:guardar", (_evt, { clave, valor }) =>
-    db.guardarPreferencia(clave, valor)
-  );
-}
-
-app.whenReady().then(async () => {
-  try {
-    const ruta = await db.init(app.getPath("userData"));
-    console.log("Base de datos inicializada en:", ruta);
-  } catch (err) {
-    console.error("No se pudo inicializar la base de datos:", err);
-  }
-
-  registrarIpc();
-  crearVentana();
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) crearVentana();
-  });
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
-
-const db = new sqlite3.Database('contabilidad.db');
-
-// --- INICIALIZACIÓN DE TABLAS EN SQLITE ---
-db.serialize(() => {
-  // 1. Tabla Estimados
-  db.run(`
-    CREATE TABLE IF NOT EXISTS estimados (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cliente TEXT,
-      fecha TEXT,
-      descripcion TEXT,
-      cantidad INTEGER,
-      precio REAL,
-      total REAL
-    )
-  `);
-
-  // 2. Tabla Facturación
-  db.run(`
-    CREATE TABLE IF NOT EXISTS facturas (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cliente TEXT,
-      fecha TEXT,
-      item TEXT,
-      cantidad INTEGER,
-      precio REAL,
-      total REAL
-    )
-  `);
-
-  // 3. Tabla Cuentas por Pagar (CxP)
-  db.run(`
-    CREATE TABLE IF NOT EXISTS cxp (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      proveedor TEXT,
-      fecha TEXT,
-      monto REAL,
-      estado TEXT DEFAULT 'Pendiente'
-    )
-  `);
-});
-
-function createWindow() {
-  const win = new BrowserWindow({
-    width: 1050,
-    height: 750,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true
-    }
-  });
-
-  win.loadFile(path.join(__dirname, 'src/index.html'));
-  win.focus();
-}
-
-// --- CANALES IPC PARA ESTIMADOS ---
-ipcMain.handle('estimados:obtener', () => {
-  return new Promise((resolve) => {
-    db.all('SELECT * FROM estimados ORDER BY id DESC', [], (err, rows) => {
-      resolve(err ? [] : rows);
+// IPC Handlers para la base de datos
+ipcMain.handle('db:query', async (event, query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.all(query, params, (err, rows) => {
+      if (err) reject(err.message);
+      else resolve(rows);
     });
   });
 });
 
-ipcMain.handle('estimados:guardar', (event, datos) => {
-  return new Promise((resolve) => {
-    const total = datos.cantidad * datos.precio;
-    const stmt = db.prepare('INSERT INTO estimados (cliente, fecha, descripcion, cantidad, precio, total) VALUES (?, ?, ?, ?, ?, ?)');
-    stmt.run([datos.cliente, datos.fecha, datos.descripcion, datos.cantidad, datos.precio, total], function (err) {
-      resolve({ success: !err, id: this ? this.lastID : null, error: err ? err.message : null });
-    });
-    stmt.finalize();
-  });
-});
-
-ipcMain.handle('estimados:eliminar', (event, id) => {
-  return new Promise((resolve) => {
-    db.run('DELETE FROM estimados WHERE id = ?', [id], (err) => {
-      resolve({ success: !err });
+ipcMain.handle('db:run', async (event, query, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.run(query, params, function (err) {
+      if (err) reject(err.message);
+      else resolve({ id: this.lastID, changes: this.changes });
     });
   });
 });
 
-// --- CANALES IPC PARA FACTURACIÓN ---
-ipcMain.handle('facturas:obtener', () => {
-  return new Promise((resolve) => {
-    db.all('SELECT * FROM facturas ORDER BY id DESC', [], (err, rows) => {
-      resolve(err ? [] : rows);
-    });
-  });
+// NUEVO: Receptor para manejar la navegación entre los módulos
+ipcMain.on('navegar-a', (event, pagina) => {
+  mainWindow.loadFile(path.join(__dirname, 'renderer', pagina));
 });
-
-ipcMain.handle('facturas:guardar', (event, datos) => {
-  return new Promise((resolve) => {
-    const total = datos.cantidad * datos.precio;
-    const stmt = db.prepare('INSERT INTO facturas (cliente, fecha, item, cantidad, precio, total) VALUES (?, ?, ?, ?, ?, ?)');
-    stmt.run([datos.cliente, datos.fecha, datos.item, datos.cantidad, datos.precio, total], function (err) {
-      resolve({ success: !err, id: this ? this.lastID : null, error: err ? err.message : null });
-    });
-    stmt.finalize();
-  });
-});
-
-ipcMain.handle('facturas:eliminar', (event, id) => {
-  return new Promise((resolve) => {
-    db.run('DELETE FROM facturas WHERE id = ?', [id], (err) => {
-      resolve({ success: !err });
-    });
-  });
-});
-
-// --- CANALES IPC PARA CXP ---
-ipcMain.handle('cxp:obtener', () => {
-  return new Promise((resolve) => {
-    db.all('SELECT * FROM cxp ORDER BY id DESC', [], (err, rows) => {
-      resolve(err ? [] : rows);
-    });
-  });
-});
-
-ipcMain.handle('cxp:guardar', (event, datos) => {
-  return new Promise((resolve) => {
-    const stmt = db.prepare('INSERT INTO cxp (proveedor, fecha, monto, estado) VALUES (?, ?, ?, ?)');
-    stmt.run([datos.proveedor, datos.fecha, datos.monto, datos.estado || 'Pendiente'], function (err) {
-      resolve({ success: !err, id: this ? this.lastID : null, error: err ? err.message : null });
-    });
-    stmt.finalize();
-  });
-});
-
-ipcMain.handle('cxp:eliminar', (event, id) => {
-  return new Promise((resolve) => {
-    db.run('DELETE FROM cxp WHERE id = ?', [id], (err) => {
-      resolve({ success: !err });
-    });
-  });
-});
-
-app.whenReady().then(createWindow);
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
-

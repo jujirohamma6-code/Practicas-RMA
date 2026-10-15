@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MÓDULO CUENTAS CORRIENTES - Mónica 9</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background-color: #cce0ff;
+      color: #000000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 10px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background-color: #e6f0fa;
+      border: 2px solid #ffffff;
+      box-shadow: inset 1px 1px 0px #80aaff, inset -1px -1px 0px #4d88ff, 2px 2px 8px rgba(0,0,0,0.2);
+      border-radius: 4px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 90vh;
+    }
+
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #000066;
+      border-bottom: 2px solid #99c2ff;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .content-box {
+      background: #ffffff;
+      flex-grow: 1;
+      border: 1px solid #99c2ff;
+      border-radius: 4px;
+      padding: 15px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      background-color: #f0f4f8;
+      color: #000066;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background-color: #f8fafc;
+    }
+
+    .action-bar {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      background: #cce0ff;
+      padding: 10px;
+      border: 1px solid #99c2ff;
+      border-radius: 4px;
+      margin-top: 12px;
+    }
+
+    .action-btn {
+      background: #f0f4f8;
+      border: 2px solid #ffffff;
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.15);
+      padding: 6px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #000066;
+      transition: all 0.1s ease;
+    }
+
+    .action-btn:hover {
+      background: #e0ecff;
+      border-color: #99c2ff;
+    }
+
+    .action-btn:active {
+      transform: translateY(1px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div>
+      <div class="header-title">Control de Cuentas Corrientes y Bancos</div>
+    </div>
+    
+    <div class="content-box">
+      <p style="font-weight: bold; margin-bottom: 10px; color: #333;">Movimientos Bancarios Activos</p>
+      <table>
+        <tr>
+          <th>Referencia</th>
+          <th>Banco</th>
+          <th style="text-align: right;">Monto C$</th>
+          <th>Situación</th>
+        </tr>
+        <tr>
+          <td>CH-00124</td>
+          <td>Banco Nacional</td>
+          <td style="text-align: right;">25,000.00</td>
+          <td>Cobrado</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="action-bar">
+      <button class="action-btn" onclick="alert('Nuevo Movimiento registrado')">Nuevo</button>
+      <button class="action-btn" onclick="alert('Modificar Movimiento')">Modificar</button>
+      <button class="action-btn" onclick="alert('Clasificación de Cheques')">Clasif Chq</button>
+      <button class="action-btn" onclick="alert('Imprimiendo reporte de Cuentas Corrientes...')">Imprimir</button>
+      <button class="action-btn" onclick="window.location.href='index.html'" style="background: #ffcccc; color: #990000;">Salir</button>
+    </div>
+  </div>
+
+</body>
+</html>
